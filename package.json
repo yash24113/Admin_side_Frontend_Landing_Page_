@@ -8,7 +8,7 @@
     "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.15.14",
     "@mui/styles": "^6.4.12",
-    "@mui/system": "^7.1.1",
+    "@mui/system": "^5.15.14",
     "@mui/x-data-grid": "^5.17.24",
     "@mui/x-data-grid-pro": "^8.5.2",
     "axios": "^1.6.8",
