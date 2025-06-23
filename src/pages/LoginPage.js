@@ -89,7 +89,7 @@ function LoginPage() {
     }
     setLoading(true);
     try {
-      await axios.post(`${BACKEND_API}/api/auth/request-otp`, {
+      await axios.post(`https://langingpage-production-f27f.up.railway.app/api/auth/request-otp`, {
         email,
       });
       setStep(2);
@@ -105,7 +105,7 @@ function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await axios.post(`${BACKEND_API}/api/auth/verify-otp`, {
+      const res = await axios.post(`https://langingpage-production-f27f.up.railway.app/api/auth/verify-otp`, {
         email,
         otp,
       });
