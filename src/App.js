@@ -129,7 +129,7 @@ function App() {
 
   if (location.pathname === "/login") {
     if (user && user.isVerified) {
-      return <Navigate to="/countries" replace />;
+      return <Navigate to="/" replace />;
     }
     return (
       <Suspense fallback={<Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>}>
