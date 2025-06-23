@@ -1,8 +1,8 @@
 import axios from "axios";
 
-// Create axios instance with base URL
+// Hardcoded backend API URL
 const api = axios.create({
-  baseURL: process.env.REACT_APP_BACKEND_API || "http://localhost:5000",
+  baseURL: "https://langingpage-production-f27f.up.railway.app",
 });
 
 export default api;
