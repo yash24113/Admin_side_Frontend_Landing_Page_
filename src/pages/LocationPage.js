@@ -263,12 +263,8 @@ function LocationPage() {
       <Typography variant="h6" mb={2}>
         Locations
       </Typography>
-      <Stack direction="row" spacing={2} mb={2}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleOpen()}
-        >
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+        <Button variant="contained" color="primary" onClick={() => handleOpen()}>
           Add Location
         </Button>
         <TextField
@@ -277,20 +273,10 @@ function LocationPage() {
           onChange={(e) => setSearch(e.target.value)}
           size="small"
         />
-        <Button
-          variant="outlined"
-          startIcon={<Download />}
-          component={CSVLink}
-          data={csvData}
-          filename="locations.csv"
-        >
-          Export CSV
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<Download />}
-          onClick={handleExportPDF}
-        >
+        <CSVLink data={csvData} filename="locations.csv" style={{ textDecoration: 'none' }}>
+          <Button variant="outlined" startIcon={<Download />}>Export CSV</Button>
+        </CSVLink>
+        <Button variant="outlined" startIcon={<Download />} onClick={handleExportPDF}>
           Export PDF
         </Button>
       </Stack>

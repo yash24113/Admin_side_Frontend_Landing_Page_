@@ -200,12 +200,8 @@ function StatePage() {
       <Typography variant="h6" mb={2}>
         States
       </Typography>
-      <Stack direction="row" spacing={2} mb={2}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleOpen()}
-        >
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+        <Button variant="contained" color="primary" onClick={() => handleOpen()}>
           Add State
         </Button>
         <TextField
@@ -214,20 +210,10 @@ function StatePage() {
           onChange={(e) => setSearch(e.target.value)}
           size="small"
         />
-        <Button
-          variant="outlined"
-          startIcon={<Download />}
-          component={CSVLink}
-          data={csvData}
-          filename="states.csv"
-        >
-          Export CSV
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<Download />}
-          onClick={handleExportPDF}
-        >
+        <CSVLink data={csvData} filename="states.csv" style={{ textDecoration: 'none' }}>
+          <Button variant="outlined" startIcon={<Download />}>Export CSV</Button>
+        </CSVLink>
+        <Button variant="outlined" startIcon={<Download />} onClick={handleExportPDF}>
           Export PDF
         </Button>
       </Stack>
