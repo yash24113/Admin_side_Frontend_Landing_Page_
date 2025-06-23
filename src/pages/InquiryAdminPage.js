@@ -279,9 +279,6 @@ export default function InquiryAdminPage() {
           Business Inquiry
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
-          <Button variant="contained" color="primary" onClick={() => handleOpen()}>
-            Add Inquiry
-          </Button>
           <TextField
             label="Search"
             value={search}
