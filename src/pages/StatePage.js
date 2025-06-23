@@ -20,10 +20,14 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Edit, Delete, Download } from "@mui/icons-material";
 import axios from "axios";
 import { CSVLink } from "react-csv";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
 function StatePage() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [states, setStates] = useState([]);
   const [countries, setCountries] = useState([]);
   const [open, setOpen] = useState(false);
@@ -32,6 +36,12 @@ function StatePage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState(3);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
   const fetchStates = async () => {
     const res = await axios.get(`${BACKEND_API}/api/states`);

@@ -42,6 +42,8 @@ import {
   ShoppingCart,
 } from "@mui/icons-material";
 import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
@@ -90,6 +92,8 @@ const initialForm = {
 };
 
 function SEOPage() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [seos, setSEOs] = useState([]);
   const [products, setProducts] = useState([]);
   const [locations, setLocations] = useState([]);
@@ -110,6 +114,12 @@ function SEOPage() {
     const res = await axios.get(`${BACKEND_API}/api/locations`);
     setLocations(res.data);
   };
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     fetchSEOs();

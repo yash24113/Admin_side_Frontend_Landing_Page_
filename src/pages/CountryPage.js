@@ -16,10 +16,14 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Edit, Delete, Download } from "@mui/icons-material";
 import axios from "axios";
 import { CSVLink } from "react-csv";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
 function CountryPage() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
   const [open, setOpen] = useState(false);
   const [editCountry, setEditCountry] = useState(null);
@@ -27,6 +31,12 @@ function CountryPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState(3);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
   const fetchCountries = async () => {
     const res = await axios.get(`${BACKEND_API}/api/countries`);

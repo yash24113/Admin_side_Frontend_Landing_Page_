@@ -20,10 +20,14 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Edit, Delete, Download } from "@mui/icons-material";
 import axios from "axios";
 import { CSVLink } from "react-csv";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
 function CityPage() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [cities, setCities] = useState([]);
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
@@ -54,6 +58,12 @@ function CityPage() {
     );
     setStates(res.data);
   };
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     fetchCities();

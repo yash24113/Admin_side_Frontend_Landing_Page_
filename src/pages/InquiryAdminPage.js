@@ -11,6 +11,8 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Edit, Delete, Download } from "@mui/icons-material";
 import api from "../utils/api";
 import { CSVLink } from "react-csv";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
@@ -28,6 +30,8 @@ function formatDateTime(dateString) {
 }
 
 export default function InquiryAdminPage() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [inquiries, setInquiries] = useState([]);
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
@@ -38,6 +42,12 @@ export default function InquiryAdminPage() {
     const res = await api.get(`${BACKEND_API}/api/inquiries`);
     setInquiries(res.data);
   };
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     fetchInquiries();
