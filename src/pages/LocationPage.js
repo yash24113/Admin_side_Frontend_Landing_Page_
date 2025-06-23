@@ -15,6 +15,7 @@ import {
   TextField,
   IconButton,
   Stack,
+  CircularProgress,
 } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Edit, Delete, Download } from "@mui/icons-material";
@@ -44,10 +45,20 @@ function LocationPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState(3);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
 
   const fetchLocations = async () => {
-    const res = await axios.get(`${BACKEND_API}/api/locations`);
-    setLocations(res.data);
+    setIsLoading(true);
+    setFetchError("");
+    try {
+      const res = await axios.get(`${BACKEND_API}/api/locations`);
+      setLocations(res.data);
+    } catch (err) {
+      setFetchError("Failed to fetch locations.");
+    } finally {
+      setIsLoading(false);
+    }
   };
   const fetchCountries = async () => {
     const res = await axios.get(`${BACKEND_API}/api/countries`);
@@ -284,17 +295,27 @@ function LocationPage() {
         </Button>
       </Stack>
       <Box sx={{ height: 400, width: "100%" }}>
-        <DataGrid
-          rows={filteredRows.map((row) => ({ ...row, id: row._id }))}
-          columns={columns}
-          pageSize={pageSize}
-          onPageSizeChange={(newSize) => setPageSize(newSize)}
-          rowsPerPageOptions={[3, 6, 9, 15]}
-          pagination
-          components={{ Toolbar: GridToolbar }}
-          disableSelectionOnClick
-          autoHeight
-        />
+        {isLoading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+            <CircularProgress />
+          </Box>
+        ) : fetchError ? (
+          <Alert severity="error">{fetchError}</Alert>
+        ) : filteredRows.length === 0 ? (
+          <Alert severity="info">No data found.</Alert>
+        ) : (
+          <DataGrid
+            rows={filteredRows.map((row) => ({ ...row, id: row._id }))}
+            columns={columns}
+            pageSize={pageSize}
+            onPageSizeChange={(newSize) => setPageSize(newSize)}
+            rowsPerPageOptions={[3, 6, 9, 15]}
+            pagination
+            components={{ Toolbar: GridToolbar }}
+            disableSelectionOnClick
+            autoHeight
+          />
+        )}
       </Box>
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>

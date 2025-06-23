@@ -9,7 +9,7 @@ export function AuthProvider({ children }) {
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Save user to localStorage whenever it changes
   useEffect(() => {
@@ -20,52 +20,7 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  // Check session validity on app start and periodically
-  useEffect(() => {
-    const checkSession = async () => {
-      const savedUser = localStorage.getItem("user");
-      if (savedUser) {
-        try {
-          const userData = JSON.parse(savedUser);
-          // Check if user session is still valid
-          if (userData.isVerified && userData.email) {
-            try {
-              const response = await axios.get(
-                `http://localhost:5000/api/auth/check-session?email=${userData.email}`
-              );
-              if (response.data.valid) {
-                setUser(response.data.user);
-              } else {
-                // Session expired, clear user
-                setUser(null);
-                localStorage.removeItem("user");
-              }
-            } catch (error) {
-              // Session check failed, clear user
-              setUser(null);
-              localStorage.removeItem("user");
-            }
-          } else {
-            // User not verified, clear user
-            setUser(null);
-            localStorage.removeItem("user");
-          }
-        } catch (error) {
-          // Invalid data in localStorage, clear it
-          setUser(null);
-          localStorage.removeItem("user");
-        }
-      }
-      setLoading(false);
-    };
-
-    checkSession();
-
-    // Set up periodic session checking (every 5 minutes)
-    const sessionCheckInterval = setInterval(checkSession, 5 * 60 * 1000);
-
-    return () => clearInterval(sessionCheckInterval);
-  }, []);
+  // No periodic session check; session persists until logout
 
   const login = (userData) => {
     setUser(userData);

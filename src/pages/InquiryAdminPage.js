@@ -6,6 +6,8 @@ import {
   TextField,
   IconButton,
   Stack,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Edit, Delete, Download } from "@mui/icons-material";
@@ -37,10 +39,20 @@ export default function InquiryAdminPage() {
   const [editData, setEditData] = useState({});
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState(3);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
 
   const fetchInquiries = async () => {
-    const res = await api.get(`${BACKEND_API}/api/inquiries`);
-    setInquiries(res.data);
+    setIsLoading(true);
+    setFetchError("");
+    try {
+      const res = await api.get(`${BACKEND_API}/api/inquiries`);
+      setInquiries(res.data);
+    } catch (err) {
+      setFetchError("Failed to fetch inquiries.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -291,21 +303,27 @@ export default function InquiryAdminPage() {
           </Button>
         </Stack>
         <Box sx={{ height: 400, width: "100%" }}>
-          <DataGrid
-            rows={filteredRows.map((row) => ({
-              ...row,
-              id: row._id,
-              createdAt: row.createdAt || null,
-            }))}
-            columns={columns}
-            pageSize={pageSize}
-            onPageSizeChange={(newSize) => setPageSize(newSize)}
-            rowsPerPageOptions={[3, 6, 9, 15]}
-            pagination
-            components={{ Toolbar: GridToolbar }}
-            disableSelectionOnClick
-            autoHeight
-          />
+          {isLoading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+              <CircularProgress />
+            </Box>
+          ) : fetchError ? (
+            <Alert severity="error">{fetchError}</Alert>
+          ) : filteredRows.length === 0 ? (
+            <Alert severity="info">No data found.</Alert>
+          ) : (
+            <DataGrid
+              rows={filteredRows.map((row) => ({ ...row, id: row._id }))}
+              columns={columns}
+              pageSize={pageSize}
+              onPageSizeChange={(newSize) => setPageSize(newSize)}
+              rowsPerPageOptions={[3, 6, 9, 15]}
+              pagination
+              components={{ Toolbar: GridToolbar }}
+              disableSelectionOnClick
+              autoHeight
+            />
+          )}
         </Box>
       </Box>
     </>
