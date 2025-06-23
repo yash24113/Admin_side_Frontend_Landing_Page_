@@ -56,7 +56,7 @@ export default function InquiryAdminPage() {
   };
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && (!user || (user && user.isVerified === false))) {
       navigate("/login");
     }
   }, [user, loading, navigate]);

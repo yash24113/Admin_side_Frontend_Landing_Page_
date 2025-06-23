@@ -109,7 +109,7 @@ function LoginPage() {
         email,
         otp,
       });
-      login(res.data.user);
+      login({ ...res.data.user, isVerified: true });
       showModal("Login successful!");
       setTimeout(() => {
         setModalOpen(false);
