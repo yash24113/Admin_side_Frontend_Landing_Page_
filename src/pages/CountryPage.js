@@ -179,15 +179,14 @@ function CountryPage() {
           onChange={(e) => setSearch(e.target.value)}
           size="small"
         />
-        <Button
-          variant="outlined"
-          startIcon={<Download />}
-          component={CSVLink}
-          data={csvData}
-          filename="countries.csv"
-        >
-          Export CSV
-        </Button>
+        <CSVLink data={csvData} filename="countries.csv" style={{ textDecoration: 'none' }}>
+          <Button
+            variant="outlined"
+            startIcon={<Download />}
+          >
+            Export CSV
+          </Button>
+        </CSVLink>
         <Button
           variant="outlined"
           startIcon={<Download />}
