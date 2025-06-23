@@ -21,7 +21,7 @@ import { Edit, Delete, Download } from "@mui/icons-material";
 import axios from "axios";
 import { CSVLink } from "react-csv";
 
-const BACKEND_API = process.env.REACT_APP_BACKEND_API;
+const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
 function CityPage() {
   const [cities, setCities] = useState([]);

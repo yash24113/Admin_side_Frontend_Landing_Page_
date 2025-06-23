@@ -19,7 +19,7 @@ import {
 } from "@mui/icons-material";
 import api from "../utils/api";
 
-const BACKEND_API = process.env.REACT_APP_BACKEND_API;
+const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
 const StatCard = ({ title, count, icon, color, loading }) => {
   return (

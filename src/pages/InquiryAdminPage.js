@@ -12,7 +12,7 @@ import { Edit, Delete, Download } from "@mui/icons-material";
 import api from "../utils/api";
 import { CSVLink } from "react-csv";
 
-const BACKEND_API = process.env.REACT_APP_BACKEND_API;
+const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
 // Helper function to format datetime
 function formatDateTime(dateString) {
