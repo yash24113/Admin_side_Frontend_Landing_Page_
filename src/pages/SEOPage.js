@@ -105,6 +105,19 @@ function SEOPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [customFields, setCustomFields] = useState(() => {
+    try {
+      const saved = localStorage.getItem("seo_custom_fields");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [newFieldName, setNewFieldName] = useState("");
+  const [newFieldType, setNewFieldType] = useState("text");
+  const [newDropdownSource, setNewDropdownSource] = useState("");
+  const [dropdownOptions, setDropdownOptions] = useState({});
 
   const fetchSEOs = async () => {
     setIsLoading(true);
@@ -150,16 +163,24 @@ function SEOPage() {
     fetchLocations();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem("seo_custom_fields", JSON.stringify(customFields));
+  }, [customFields]);
+
   const handleOpen = (seo = null) => {
+    let baseForm = seo
+      ? {
+          ...seo,
+          publishedAt: seo.publishedAt ? seo.publishedAt.slice(0, 16) : "",
+        }
+      : initialForm;
+    customFields.forEach((field) => {
+      if (!(field.name in baseForm)) {
+        baseForm[field.name] = field.type === "number" ? "" : "";
+      }
+    });
     setEditSEO(seo);
-    setForm(
-      seo
-        ? {
-            ...seo,
-            publishedAt: seo.publishedAt ? seo.publishedAt.slice(0, 16) : "",
-          }
-        : initialForm
-    );
+    setForm(baseForm);
     setError("");
     setOpen(true);
   };
@@ -234,6 +255,63 @@ function SEOPage() {
     doc.save("seos.pdf");
   };
 
+  const fetchDropdownOptions = async (source) => {
+    let url = null;
+    switch (source) {
+      case "Country":
+        url = `${BACKEND_API}/api/countries`;
+        break;
+      case "State":
+        url = `${BACKEND_API}/api/states`;
+        break;
+      case "City":
+        url = `${BACKEND_API}/api/cities`;
+        break;
+      case "Location":
+        url = `${BACKEND_API}/api/locations`;
+        break;
+      case "Product":
+        url = `${BACKEND_API}/api/products`;
+        break;
+      default:
+        return [];
+    }
+    try {
+      const res = await axios.get(url);
+      return res.data;
+    } catch {
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      const newDropdownOptions = {};
+      for (const field of customFields) {
+        if (field.type === "dropdown" && field.dropdownSource) {
+          newDropdownOptions[field.name] = await fetchDropdownOptions(field.dropdownSource);
+        }
+      }
+      setDropdownOptions(newDropdownOptions);
+    })();
+  }, [customFields]);
+
+  const handleAddCustomField = () => {
+    if (!newFieldName) return;
+    if (customFields.some(f => f.name === newFieldName)) return;
+    if (newFieldType === "dropdown" && !newDropdownSource) return;
+    const newField = {
+      name: newFieldName,
+      type: newFieldType,
+      dropdownSource: newFieldType === "dropdown" ? newDropdownSource : undefined,
+    };
+    setCustomFields([...customFields, newField]);
+    setNewFieldName("");
+    setNewFieldType("text");
+    setNewDropdownSource("");
+    setForm((prev) => ({ ...prev, [newFieldName]: "" }));
+  };
+
   return (
     <Box p={3}>
       <Typography variant="h6" mb={2}>
@@ -246,6 +324,14 @@ function SEOPage() {
         sx={{ mb: 2 }}
       >
         Add SEO Entry
+      </Button>
+      <Button
+        variant="outlined"
+        color="secondary"
+        onClick={() => setSettingsOpen(true)}
+        sx={{ mb: 2, ml: 2 }}
+      >
+        Settings
       </Button>
       <Box sx={{ height: 400, width: "100%" }}>
         {isLoading ? (
@@ -273,7 +359,7 @@ function SEOPage() {
                   boxShadow: 6,
                   minHeight: 420,
                   width: "100%",
-                  maxWidth: 540,
+                  maxWidth: 1000,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -333,206 +419,244 @@ function SEOPage() {
                   </Box>
                 </Box>
                 <CardContent sx={{ width: "100%", pt: 2, pb: 1 }}>
-                  <Stack spacing={1} divider={<Divider flexItem />}>
-                    {/* Product & Location */}
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <ShoppingCart fontSize="small" color="primary" />
-                      <Typography variant="body2" fontWeight={500}>
-                        Product:
-                      </Typography>
-                      <Typography variant="body2">
-                        {products.find((p) => p._id === seo.productId)?.name || seo.productId}
-                      </Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Public fontSize="small" color="primary" />
-                      <Typography variant="body2" fontWeight={500}>
-                        Location:
-                      </Typography>
-                      <Typography variant="body2">
-                        {locations.find((l) => l._id === seo.locationId)?.name || seo.locationId}
-                      </Typography>
-                    </Stack>
-                    {/* SKU, Rating, Published */}
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Info fontSize="small" color="primary" />
-                      <Typography variant="body2" fontWeight={500}>
-                        SKU:
-                      </Typography>
-                      <Typography variant="body2">{seo.sku}</Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Star fontSize="small" color="warning" />
-                      <Typography variant="body2" fontWeight={500}>
-                        Rating:
-                      </Typography>
-                      <Typography variant="body2">
-                        {seo.rating_value} ({seo.rating_count})
-                      </Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <CalendarToday fontSize="small" color="primary" />
-                      <Typography variant="body2" fontWeight={500}>
-                        Published:
-                      </Typography>
-                      <Typography variant="body2">
-                        {seo.publishedAt ? new Date(seo.publishedAt).toLocaleDateString() : "-"}
-                      </Typography>
-                    </Stack>
-                    {/* Description */}
-                    <Box>
-                      <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
-                        Description:
-                      </Typography>
-                      <Typography variant="body2">
-                        {seo.description || "-"}
-                      </Typography>
+                  {/* Primary Details Section */}
+                  <Box sx={{ mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Info sx={{ mr: 1 }} color="primary" />
+                      <Typography variant="subtitle1" fontWeight={700}>Primary Details</Typography>
                     </Box>
-                    {/* Keywords */}
-                    <Box>
-                      <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
-                        Keywords:
-                      </Typography>
-                      {seo.keywords ? (
-                        seo.keywords
-                          .split(",")
-                          .map((kw, i) => (
-                            <Tooltip key={i} title={kw.trim()}>
-                              <Chip
-                                label={kw.trim().length > 15 ? kw.trim().slice(0, 15) + "…" : kw.trim()}
-                                size="small"
-                                sx={{ mr: 0.5, mb: 0.5 }}
-                                color="secondary"
-                              />
-                            </Tooltip>
-                          ))
-                      ) : (
-                        <Chip label="No keywords" size="small" />
-                      )}
-                    </Box>
-                    {/* Canonical URL */}
-                    <Box>
-                      <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
-                        Canonical URL:
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 1 }}>
-                        {seo.canonical_url ? (
-                          <a
-                            href={seo.canonical_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: "#764ba2", textDecoration: "underline" }}
-                          >
-                            <LinkIcon fontSize="inherit" sx={{ verticalAlign: "middle" }} />{" "}
-                            {seo.canonical_url}
-                          </a>
-                        ) : (
-                          <span style={{ color: "#aaa" }}>—</span>
-                        )}
-                      </Typography>
-                    </Box>
-                    {/* Author */}
-                    <Box>
-                      <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
-                        Author:
-                      </Typography>
-                      <Typography variant="body2">{seo.author_name || "—"}</Typography>
-                    </Box>
-                    {/* Meta & Advanced */}
-                    <Accordion
-                      sx={{ boxShadow: "none", background: "transparent", mt: 1 }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography variant="body2" fontWeight={700}>
-                          Meta & Advanced
+                    <Stack direction="row" spacing={3} alignItems="flex-start" flexWrap="wrap">
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 160, mr: 2, mb: 1 }}>
+                        <ShoppingCart fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Product:</Typography>
+                        <Typography variant="body2">
+                          {products.find((p) => p._id === seo.productId)?.name || seo.productId}
                         </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Stack spacing={0.5}>
-                          <Typography variant="body2">
-                            <b>Robots:</b> {seo.robots}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Charset:</b> {seo.charset}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>x-ua-compatible:</b> {seo.xUaCompatible}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Viewport:</b> {seo.viewport}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Content Language:</b> {seo.contentLanguage}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Google Site Verification:</b> {seo.googleSiteVerification}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>MS Validate:</b> {seo.msValidate}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Theme Color:</b> {seo.themeColor}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Mobile Web App Capable:</b> {seo.mobileWebAppCapable ? "Yes" : "No"}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Apple Status Bar Style:</b> {seo.appleStatusBarStyle}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Format Detection:</b> {seo.formatDetection}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>OG Locale:</b> {seo.ogLocale}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>OG Title:</b> {seo.ogTitle}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>OG Description:</b> {seo.ogDescription}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>OG Type:</b> {seo.ogType}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>OG URL:</b> {seo.ogUrl}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>OG Site Name:</b> {seo.ogSiteName}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Twitter Card:</b> {seo.twitterCard}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Twitter Site:</b> {seo.twitterSite}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Twitter Title:</b> {seo.twitterTitle}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Twitter Description:</b> {seo.twitterDescription}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Hreflang:</b> {seo.hreflang}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>x-default:</b> {seo.x_default}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Excerpt:</b> {seo.excerpt}
-                          </Typography>
-                          <Typography variant="body2">
-                            <b>Description HTML:</b>{" "}
-                            <span
-                              dangerouslySetInnerHTML={{
-                                __html: seo.description_html,
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 160, mr: 2, mb: 1 }}>
+                        <Public fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Location:</Typography>
+                        <Typography variant="body2">
+                          {locations.find((l) => l._id === seo.locationId)?.name || seo.locationId}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Label fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>SKU:</Typography>
+                        <Typography variant="body2">{seo.sku}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Star fontSize="small" color="warning" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Rating:</Typography>
+                        <Typography variant="body2">{seo.rating_value} ({seo.rating_count})</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <CalendarToday fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Published:</Typography>
+                        <Typography variant="body2">
+                          {seo.publishedAt ? new Date(seo.publishedAt).toLocaleDateString() : "-"}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Person fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Author:</Typography>
+                        <Typography variant="body2">{seo.author_name || "—"}</Typography>
+                      </Box>
+                    </Stack>
+                  </Box>
+                  {/* Secondary Details Section */}
+                  <Box sx={{ mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Label sx={{ mr: 1 }} color="secondary" />
+                      <Typography variant="subtitle1" fontWeight={700}>Secondary Details</Typography>
+                    </Box>
+                    <Stack direction="row" spacing={3} alignItems="flex-start" flexWrap="wrap" justifyContent="flex-start">
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Robots:</Typography>
+                        <Typography variant="body2">{seo.robots}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Charset:</Typography>
+                        <Typography variant="body2">{seo.charset}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>x-ua-compatible:</Typography>
+                        <Typography variant="body2">{seo.xUaCompatible}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Viewport:</Typography>
+                        <Typography variant="body2">{seo.viewport}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Public fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Content Language:</Typography>
+                        <Typography variant="body2">{seo.contentLanguage}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Google Site Verification:</Typography>
+                        <Typography variant="body2">{seo.googleSiteVerification}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>MS Validate:</Typography>
+                        <Typography variant="body2">{seo.msValidate}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Theme Color:</Typography>
+                        <Typography variant="body2">{seo.themeColor}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Mobile Web App Capable:</Typography>
+                        <Typography variant="body2">{seo.mobileWebAppCapable ? "Yes" : "No"}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Apple Status Bar Style:</Typography>
+                        <Typography variant="body2">{seo.appleStatusBarStyle}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Format Detection:</Typography>
+                        <Typography variant="body2">{seo.formatDetection}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Public fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>OG Locale:</Typography>
+                        <Typography variant="body2">{seo.ogLocale}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Label fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>OG Title:</Typography>
+                        <Typography variant="body2">{seo.ogTitle}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>OG Description:</Typography>
+                        <Typography variant="body2">{seo.ogDescription}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>OG Type:</Typography>
+                        <Typography variant="body2">{seo.ogType}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <LinkIcon fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>OG URL:</Typography>
+                        <Typography variant="body2">{seo.ogUrl}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Label fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>OG Site Name:</Typography>
+                        <Typography variant="body2">{seo.ogSiteName}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Tag fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Twitter Card:</Typography>
+                        <Typography variant="body2">{seo.twitterCard}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Twitter Site:</Typography>
+                        <Typography variant="body2">{seo.twitterSite}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Label fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Twitter Title:</Typography>
+                        <Typography variant="body2">{seo.twitterTitle}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Twitter Description:</Typography>
+                        <Typography variant="body2">{seo.twitterDescription}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Public fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Hreflang:</Typography>
+                        <Typography variant="body2">{seo.hreflang}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>x-default:</Typography>
+                        <Typography variant="body2">{seo.x_default}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 120, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Excerpt:</Typography>
+                        <Typography variant="body2">{seo.excerpt}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 200, mr: 2, mb: 1 }}>
+                        <Info fontSize="small" color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>Description HTML:</Typography>
+                        {seo.description_html ? (
+                          <Box
+                            sx={{ background: "#f5f5f5", p: 1, borderRadius: 1 }}
+                            dangerouslySetInnerHTML={{ __html: seo.description_html }}
+                          />
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">—</Typography>
+                        )}
+                      </Box>
+                    </Stack>
+                  </Box>
+                  {/* Custom Fields Section */}
+                  {customFields.length > 0 && (
+                    <Box sx={{ mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <Tag sx={{ mr: 1 }} color="secondary" />
+                        <Typography variant="subtitle1" fontWeight={700}>Custom Fields</Typography>
+                      </Box>
+                      <Stack direction="row" spacing={2} flexWrap="wrap">
+                        {customFields.map((field) => {
+                          let displayValue = "—";
+                          if (seo[field.name] !== undefined && seo[field.name] !== "") {
+                            if (field.type === "dropdown" && dropdownOptions[field.name]) {
+                              const option = dropdownOptions[field.name].find(
+                                (opt) =>
+                                  opt._id === seo[field.name] ||
+                                  opt.id === seo[field.name] ||
+                                  opt.name === seo[field.name]
+                              );
+                              displayValue = option
+                                ? option.name || option.title || option.slug || option._id || option.id
+                                : seo[field.name];
+                            } else {
+                              displayValue = String(seo[field.name]);
+                            }
+                          }
+                          return (
+                            <Box
+                              key={field.name}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                background: "linear-gradient(90deg, #e0c3fc 0%, #8ec5fc 100%)",
+                                borderRadius: 2,
+                                px: 2,
+                                py: 1,
+                                boxShadow: 1,
+                                minWidth: 100,
+                                mr: 2,
+                                mb: 1,
                               }}
-                            />
-                          </Typography>
-                        </Stack>
-                      </AccordionDetails>
-                    </Accordion>
-                  </Stack>
+                            >
+                              <Tag fontSize="small" color="action" sx={{ mr: 1 }} />
+                              <Typography variant="body2" fontWeight={600} sx={{ color: '#764ba2', mr: 0.5 }}>
+                                {field.name}:
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#222' }}>{displayValue}</Typography>
+                            </Box>
+                          );
+                        })}
+                      </Stack>
+                    </Box>
+                  )}
                 </CardContent>
                 <CardActions
                   sx={{ justifyContent: "flex-end", p: 2, width: "100%" }}
@@ -819,13 +943,6 @@ function SEOPage() {
             margin="normal"
           />
           <TextField
-            label="Author Name"
-            value={form.author_name}
-            onChange={(e) => setForm({ ...form, author_name: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
             label="Excerpt"
             value={form.excerpt}
             onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
@@ -877,12 +994,152 @@ function SEOPage() {
             margin="normal"
             InputLabelProps={{ shrink: true }}
           />
+          {/* Custom Fields */}
+          {customFields.map((field) => {
+            if (field.type === "text") {
+              return (
+                <TextField
+                  key={field.name}
+                  label={field.name}
+                  value={form[field.name] || ""}
+                  onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}
+                  fullWidth
+                  margin="normal"
+                />
+              );
+            } else if (field.type === "number") {
+              return (
+                <TextField
+                  key={field.name}
+                  label={field.name}
+                  type="number"
+                  value={form[field.name] || ""}
+                  onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}
+                  fullWidth
+                  margin="normal"
+                />
+              );
+            } else if (field.type === "dropdown") {
+              const options = dropdownOptions[field.name] || [];
+              return (
+                <FormControl fullWidth margin="normal" key={field.name}>
+                  <InputLabel>{field.name}</InputLabel>
+                  <Select
+                    value={form[field.name] || ""}
+                    label={field.name}
+                    onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}
+                  >
+                    {options.map((opt) => (
+                      <MenuItem key={opt._id || opt.id || opt.name} value={opt._id || opt.id || opt.name}>
+                        {opt.name || opt.title || opt.slug || opt._id || opt.id}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              );
+            } else {
+              return null;
+            }
+          })}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained">
             {editSEO ? "Update" : "Add"}
           </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Custom Fields Settings</DialogTitle>
+        <DialogContent>
+          <Typography variant="subtitle1" sx={{ mb: 2 }}>Add New Field</Typography>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={4}>
+              <TextField
+                label="Field Name"
+                value={newFieldName}
+                onChange={(e) => setNewFieldName(e.target.value)}
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Field Type</InputLabel>
+                <Select
+                  value={newFieldType}
+                  label="Field Type"
+                  onChange={(e) => setNewFieldType(e.target.value)}
+                >
+                  <MenuItem value="text">Text</MenuItem>
+                  <MenuItem value="number">Number</MenuItem>
+                  <MenuItem value="dropdown">Dropdown</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            {newFieldType === "dropdown" && (
+              <Grid item xs={4}>
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Dropdown Source</InputLabel>
+                  <Select
+                    value={newDropdownSource}
+                    label="Dropdown Source"
+                    onChange={(e) => setNewDropdownSource(e.target.value)}
+                  >
+                    <MenuItem value="Country">Country</MenuItem>
+                    <MenuItem value="State">State</MenuItem>
+                    <MenuItem value="City">City</MenuItem>
+                    <MenuItem value="Location">Location</MenuItem>
+                    <MenuItem value="Product">Product</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+          </Grid>
+          <Button
+            sx={{ mt: 1, mb: 2 }}
+            variant="contained"
+            onClick={handleAddCustomField}
+          >
+            Add Field
+          </Button>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>Custom Fields</Typography>
+          <Box sx={{ maxHeight: 300, overflow: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={{ borderBottom: "1px solid #ccc", textAlign: "left", padding: 4 }}>Name</th>
+                  <th style={{ borderBottom: "1px solid #ccc", textAlign: "left", padding: 4 }}>Type</th>
+                  <th style={{ borderBottom: "1px solid #ccc", textAlign: "left", padding: 4 }}>Dropdown Source</th>
+                  <th style={{ borderBottom: "1px solid #ccc", textAlign: "left", padding: 4 }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {customFields.map((field, idx) => (
+                  <tr key={field.name}>
+                    <td style={{ padding: 4 }}>{field.name}</td>
+                    <td style={{ padding: 4 }}>{field.type}</td>
+                    <td style={{ padding: 4 }}>{field.dropdownSource || "-"}</td>
+                    <td style={{ padding: 4 }}>
+                      <Button
+                        color="error"
+                        size="small"
+                        onClick={() => {
+                          setCustomFields(customFields.filter((_, i) => i !== idx));
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSettingsOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>
