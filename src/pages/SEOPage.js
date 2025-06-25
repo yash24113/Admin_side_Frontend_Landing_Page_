@@ -91,6 +91,8 @@ const initialForm = {
   rating_value: "",
   rating_count: "",
   publishedAt: "",
+  seo_custom_fields: undefined,
+  custom: {},
 };
 
 function SEOPage() {
@@ -114,10 +116,10 @@ function SEOPage() {
     }
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [dropdownOptions, setDropdownOptions] = useState({});
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
   const [newDropdownSource, setNewDropdownSource] = useState("");
-  const [dropdownOptions, setDropdownOptions] = useState({});
 
   const fetchSEOs = async () => {
     setIsLoading(true);
@@ -172,11 +174,12 @@ function SEOPage() {
       ? {
           ...seo,
           publishedAt: seo.publishedAt ? seo.publishedAt.slice(0, 16) : "",
+          custom: seo.custom || {},
         }
-      : initialForm;
-    customFields.forEach((field) => {
-      if (!(field.name in baseForm)) {
-        baseForm[field.name] = field.type === "number" ? "" : "";
+      : { ...initialForm, custom: {} };
+    customFields.forEach(field => {
+      if (!(field.name in baseForm.custom)) {
+        baseForm.custom[field.name] = "";
       }
     });
     setEditSEO(seo);
@@ -297,19 +300,21 @@ function SEOPage() {
   }, [customFields]);
 
   const handleAddCustomField = () => {
-    if (!newFieldName) return;
-    if (customFields.some(f => f.name === newFieldName)) return;
+    if (!newFieldName.trim() || customFields.some(f => f.name === newFieldName.trim())) return;
     if (newFieldType === "dropdown" && !newDropdownSource) return;
-    const newField = {
-      name: newFieldName,
-      type: newFieldType,
-      dropdownSource: newFieldType === "dropdown" ? newDropdownSource : undefined,
-    };
-    setCustomFields([...customFields, newField]);
+    setCustomFields([
+      ...customFields,
+      newFieldType === "dropdown"
+        ? { name: newFieldName.trim(), type: newFieldType, dropdownSource: newDropdownSource }
+        : { name: newFieldName.trim(), type: newFieldType }
+    ]);
     setNewFieldName("");
     setNewFieldType("text");
     setNewDropdownSource("");
-    setForm((prev) => ({ ...prev, [newFieldName]: "" }));
+  };
+
+  const handleDeleteCustomField = idx => {
+    setCustomFields(customFields.filter((_, i) => i !== idx));
   };
 
   return (
@@ -608,52 +613,41 @@ function SEOPage() {
                   {/* Custom Fields Section */}
                   {customFields.length > 0 && (
                     <Box sx={{ mb: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <Tag sx={{ mr: 1 }} color="secondary" />
-                        <Typography variant="subtitle1" fontWeight={700}>Custom Fields</Typography>
-                      </Box>
+                      <Typography variant="subtitle1" fontWeight={700}>Custom Fields</Typography>
                       <Stack direction="row" spacing={2} flexWrap="wrap">
-                        {customFields.map((field) => {
-                          let displayValue = "—";
-                          if (seo[field.name] !== undefined && seo[field.name] !== "") {
-                            if (field.type === "dropdown" && dropdownOptions[field.name]) {
-                              const option = dropdownOptions[field.name].find(
-                                (opt) =>
-                                  opt._id === seo[field.name] ||
-                                  opt.id === seo[field.name] ||
-                                  opt.name === seo[field.name]
-                              );
-                              displayValue = option
-                                ? option.name || option.title || option.slug || option._id || option.id
-                                : seo[field.name];
-                            } else {
-                              displayValue = String(seo[field.name]);
-                            }
-                          }
-                          return (
-                            <Box
-                              key={field.name}
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                background: "linear-gradient(90deg, #e0c3fc 0%, #8ec5fc 100%)",
-                                borderRadius: 2,
-                                px: 2,
-                                py: 1,
-                                boxShadow: 1,
-                                minWidth: 100,
-                                mr: 2,
-                                mb: 1,
-                              }}
-                            >
-                              <Tag fontSize="small" color="action" sx={{ mr: 1 }} />
-                              <Typography variant="body2" fontWeight={600} sx={{ color: '#764ba2', mr: 0.5 }}>
-                                {field.name}:
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: '#222' }}>{displayValue}</Typography>
-                            </Box>
-                          );
-                        })}
+                        {customFields.map((field, idx) => (
+                          <Box
+                            key={field.name}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              background: "linear-gradient(90deg, #e0c3fc 0%, #8ec5fc 100%)",
+                              borderRadius: 2,
+                              px: 2,
+                              py: 1,
+                              boxShadow: 1,
+                              minWidth: 100,
+                              mr: 2,
+                              mb: 1,
+                            }}
+                          >
+                            <Tag fontSize="small" color="action" sx={{ mr: 1 }} />
+                            <Typography variant="body2" fontWeight={600} sx={{ color: '#764ba2', mr: 0.5 }}>
+                              {field.name}:
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#222' }}>
+                              {field.type === 'dropdown' && dropdownOptions[field.name]
+                                ? (
+                                    dropdownOptions[field.name].find(
+                                      opt => (opt._id || opt.id || opt.name) === (seo.custom && seo.custom[field.name])
+                                    )?.name || "—"
+                                  )
+                                : (seo.custom && seo.custom[field.name] !== undefined
+                                    ? String(seo.custom[field.name])
+                                    : "—")}
+                            </Typography>
+                          </Box>
+                        ))}
                       </Stack>
                     </Box>
                   )}
@@ -994,53 +988,62 @@ function SEOPage() {
             margin="normal"
             InputLabelProps={{ shrink: true }}
           />
-          {/* Custom Fields */}
-          {customFields.map((field) => {
-            if (field.type === "text") {
-              return (
-                <TextField
-                  key={field.name}
-                  label={field.name}
-                  value={form[field.name] || ""}
-                  onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}
-                  fullWidth
-                  margin="normal"
-                />
-              );
-            } else if (field.type === "number") {
-              return (
-                <TextField
-                  key={field.name}
-                  label={field.name}
-                  type="number"
-                  value={form[field.name] || ""}
-                  onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}
-                  fullWidth
-                  margin="normal"
-                />
-              );
-            } else if (field.type === "dropdown") {
-              const options = dropdownOptions[field.name] || [];
-              return (
-                <FormControl fullWidth margin="normal" key={field.name}>
-                  <InputLabel>{field.name}</InputLabel>
-                  <Select
-                    value={form[field.name] || ""}
-                    label={field.name}
-                    onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}
-                  >
-                    {options.map((opt) => (
-                      <MenuItem key={opt._id || opt.id || opt.name} value={opt._id || opt.id || opt.name}>
-                        {opt.name || opt.title || opt.slug || opt._id || opt.id}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              );
-            } else {
-              return null;
-            }
-          })}
+          {customFields.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
+                Custom Fields
+              </Typography>
+              <Grid container spacing={2}>
+                {customFields.map((field) => (
+                  <Grid item xs={12} sm={6} md={4} key={field.name}>
+                    {field.type === "dropdown" ? (
+                      <FormControl fullWidth margin="normal">
+                        <InputLabel>{field.name}</InputLabel>
+                        <Select
+                          value={form.custom?.[field.name] ?? ""}
+                          label={field.name}
+                          onChange={e =>
+                            setForm({
+                              ...form,
+                              custom: {
+                                ...form.custom,
+                                [field.name]: e.target.value
+                              }
+                            })
+                          }
+                        >
+                          {(dropdownOptions[field.name] || []).map(option => (
+                            <MenuItem key={option._id || option.id || option.name} value={option._id || option.id || option.name}>
+                              {option.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    ) : (
+                      <TextField
+                        label={field.name}
+                        type={field.type === "number" ? "number" : "text"}
+                        value={form.custom?.[field.name] ?? ""}
+                        onChange={e =>
+                          setForm({
+                            ...form,
+                            custom: {
+                              ...form.custom,
+                              [field.name]: field.type === "number"
+                                ? e.target.value.replace(/[^0-9.]/g, "")
+                                : e.target.value
+                            }
+                          })
+                        }
+                        fullWidth
+                        margin="normal"
+                      />
+                    )}
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
@@ -1049,27 +1052,27 @@ function SEOPage() {
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Custom Fields Settings</DialogTitle>
         <DialogContent>
           <Typography variant="subtitle1" sx={{ mb: 2 }}>Add New Field</Typography>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={4}>
+            <Grid item xs={6}>
               <TextField
                 label="Field Name"
                 value={newFieldName}
-                onChange={(e) => setNewFieldName(e.target.value)}
+                onChange={e => setNewFieldName(e.target.value)}
                 fullWidth
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={6}>
               <FormControl fullWidth margin="normal">
                 <InputLabel>Field Type</InputLabel>
                 <Select
                   value={newFieldType}
                   label="Field Type"
-                  onChange={(e) => setNewFieldType(e.target.value)}
+                  onChange={e => setNewFieldType(e.target.value)}
                 >
                   <MenuItem value="text">Text</MenuItem>
                   <MenuItem value="number">Number</MenuItem>
@@ -1078,13 +1081,13 @@ function SEOPage() {
               </FormControl>
             </Grid>
             {newFieldType === "dropdown" && (
-              <Grid item xs={4}>
+              <Grid item xs={12}>
                 <FormControl fullWidth margin="normal">
                   <InputLabel>Dropdown Source</InputLabel>
                   <Select
                     value={newDropdownSource}
                     label="Dropdown Source"
-                    onChange={(e) => setNewDropdownSource(e.target.value)}
+                    onChange={e => setNewDropdownSource(e.target.value)}
                   >
                     <MenuItem value="Country">Country</MenuItem>
                     <MenuItem value="State">State</MenuItem>
@@ -1120,14 +1123,12 @@ function SEOPage() {
                   <tr key={field.name}>
                     <td style={{ padding: 4 }}>{field.name}</td>
                     <td style={{ padding: 4 }}>{field.type}</td>
-                    <td style={{ padding: 4 }}>{field.dropdownSource || "-"}</td>
+                    <td style={{ padding: 4 }}>{field.type === 'dropdown' ? field.dropdownSource : ''}</td>
                     <td style={{ padding: 4 }}>
                       <Button
                         color="error"
                         size="small"
-                        onClick={() => {
-                          setCustomFields(customFields.filter((_, i) => i !== idx));
-                        }}
+                        onClick={() => handleDeleteCustomField(idx)}
                       >
                         Delete
                       </Button>
