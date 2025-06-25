@@ -40,7 +40,10 @@ const rainbowBorder = {
   },
 };
 
-const allowedEmails = ["yashkharva506@gmail.com", "yashkharva22@gmail.com"];
+const allowedEmails = (process.env.REACT_APP_ALLOWED_EMAILS || "")
+  .split(",")
+  .map(e => e.trim())
+  .filter(Boolean);
 
 function LoginPage() {
   const [email, setEmail] = useState("");
@@ -52,7 +55,7 @@ function LoginPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [darkMode, setDarkMode] = useState(
-    localStorage.getItem("darkMode") === "true"
+    localStorage.getItem("darkMode") === "false"
   );
 
   const { login } = useAuth();

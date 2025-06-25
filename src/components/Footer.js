@@ -13,6 +13,7 @@ function Footer() {
         py: 2,
         mt: "auto",
         borderTop: "1px solid rgba(255,255,255,0.1)",
+        
       }}
     >
       <Container maxWidth="lg">
@@ -24,7 +25,7 @@ function Footer() {
             fontWeight: 500,
           }}
         >
-          admin@{currentYear} | Amrita Global Enterprise
+          AGE@{currentYear} | Amrita Global Enterprise | Develop and Design by Yash Khalas
         </Typography>
       </Container>
     </Box>

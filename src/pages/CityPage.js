@@ -23,6 +23,8 @@ import axios from "axios";
 import { CSVLink } from "react-csv";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
@@ -40,6 +42,10 @@ function CityPage() {
   const [pageSize, setPageSize] = useState(3);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmType, setConfirmType] = useState("");
+  const [pendingId, setPendingId] = useState(null);
+  const [pendingForm, setPendingForm] = useState(null);
 
   const fetchCities = async () => {
     setIsLoading(true);
@@ -52,6 +58,7 @@ function CityPage() {
         country: city.country || null,
       }));
       setCities(cleaned);
+      localStorage.setItem("cities_cache", JSON.stringify(cleaned));
     } catch (err) {
       setFetchError("Failed to fetch cities.");
     } finally {
@@ -77,7 +84,17 @@ function CityPage() {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    fetchCities();
+    // Try to load cached cities from localStorage for instant render
+    const cached = localStorage.getItem("cities_cache");
+    if (cached) {
+      try {
+        setCities(JSON.parse(cached));
+        setIsLoading(false); // Show cached data instantly
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    fetchCities(); // Always fetch fresh data in background
     fetchCountries();
   }, []);
 
@@ -109,30 +126,61 @@ function CityPage() {
   };
 
   const handleSubmit = async () => {
-    try {
-      if (editCity) {
-        await axios.put(`${BACKEND_API}/api/cities/${editCity._id}`, form);
-      } else {
-        await axios.post(`${BACKEND_API}/api/cities`, form);
-      }
-      fetchCities();
-      handleClose();
-    } catch (err) {
-      if (err.response && err.response.status === 400) {
-        setError(
-          err.response.data.message ||
-            (err.response.data.errors && err.response.data.errors[0]?.msg) ||
-            "Request failed with status code 400"
-        );
-      } else {
-        setError("An unexpected error occurred.");
-      }
-    }
+    setPendingForm({ ...form });
+    setConfirmType("update");
+    setConfirmOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    await axios.delete(`http://localhost:5000/api/cities/${id}`);
-    fetchCities();
+  const handleDelete = (id) => {
+    setPendingId(id);
+    setConfirmType("delete");
+    setConfirmOpen(true);
+  };
+
+  const handleUpdate = () => {
+    setPendingForm({ ...form });
+    setConfirmType("update");
+    setConfirmOpen(true);
+  };
+
+  const confirmAction = async () => {
+    if (confirmType === "delete") {
+      try {
+        await axios.delete(`${BACKEND_API}/api/cities/${pendingId}`);
+        fetchCities();
+        toast.success("City deleted successfully!");
+      } catch (err) {
+        toast.error("Failed to delete city.");
+      }
+      setPendingId(null);
+    } else if (confirmType === "update") {
+      try {
+        if (editCity) {
+          await axios.put(`${BACKEND_API}/api/cities/${editCity._id}`, pendingForm);
+          toast.success("City updated successfully!");
+        } else {
+          await axios.post(`${BACKEND_API}/api/cities`, pendingForm);
+          toast.success("City added successfully!");
+        }
+        fetchCities();
+        handleClose();
+      } catch (err) {
+        if (err.response && err.response.status === 400) {
+          setError(
+            err.response.data.message ||
+              (err.response.data.errors && err.response.data.errors[0]?.msg) ||
+              "Request failed with status code 400"
+          );
+          toast.error(err.response.data.message || "Request failed with status code 400");
+        } else {
+          setError("An unexpected error occurred.");
+          toast.error("An unexpected error occurred.");
+        }
+      }
+      setPendingForm(null);
+    }
+    setConfirmOpen(false);
+    setConfirmType("");
   };
 
   // DataGrid columns
@@ -302,11 +350,18 @@ function CityPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
+          <Button onClick={handleUpdate} variant="contained">
             {editCity ? "Update" : "Add"}
           </Button>
         </DialogActions>
       </Dialog>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={confirmType === "delete" ? "Confirm Delete" : "Confirm Save"}
+        content={confirmType === "delete" ? "Are you sure you want to delete this city?" : (editCity ? "Are you sure you want to update this city?" : "Are you sure you want to add this city?")}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={confirmAction}
+      />
     </Box>
   );
 }

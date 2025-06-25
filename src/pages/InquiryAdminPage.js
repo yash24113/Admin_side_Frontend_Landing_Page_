@@ -15,6 +15,7 @@ import api from "../utils/api";
 import { CSVLink } from "react-csv";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
@@ -48,8 +49,10 @@ export default function InquiryAdminPage() {
     try {
       const res = await api.get(`${BACKEND_API}/api/inquiries`);
       setInquiries(res.data);
+      localStorage.setItem("inquiries_cache", JSON.stringify(res.data));
     } catch (err) {
       setFetchError("Failed to fetch inquiries.");
+      toast.error("Failed to fetch inquiries.");
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +65,17 @@ export default function InquiryAdminPage() {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    fetchInquiries();
+    // Try to load cached inquiries from localStorage for instant render
+    const cached = localStorage.getItem("inquiries_cache");
+    if (cached) {
+      try {
+        setInquiries(JSON.parse(cached));
+        setIsLoading(false); // Show cached data instantly
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    fetchInquiries(); // Always fetch fresh data in background
   }, []);
 
   useEffect(() => {
@@ -73,6 +86,7 @@ export default function InquiryAdminPage() {
   const handleDelete = async (id) => {
     await api.delete(`${BACKEND_API}/api/inquiries/${id}`);
     fetchInquiries();
+    toast.success("Inquiry deleted successfully!");
   };
 
   const handleEdit = (inquiry) => {
@@ -88,6 +102,7 @@ export default function InquiryAdminPage() {
     await api.put(`${BACKEND_API}/api/inquiries/${editId}`, editData);
     setEditId(null);
     fetchInquiries();
+    toast.success("Inquiry updated successfully!");
   };
 
   // DataGrid columns

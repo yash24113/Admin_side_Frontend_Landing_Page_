@@ -45,6 +45,7 @@ import {
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
@@ -111,6 +112,7 @@ function SEOPage() {
     try {
       const res = await axios.get(`${BACKEND_API}/api/seos`);
       setSEOs(res.data);
+      localStorage.setItem("seos_cache", JSON.stringify(res.data));
     } catch (err) {
       setFetchError("Failed to fetch SEO entries.");
     } finally {
@@ -133,7 +135,17 @@ function SEOPage() {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    fetchSEOs();
+    // Try to load cached SEO entries from localStorage for instant render
+    const cached = localStorage.getItem("seos_cache");
+    if (cached) {
+      try {
+        setSEOs(JSON.parse(cached));
+        setIsLoading(false); // Show cached data instantly
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    fetchSEOs(); // Always fetch fresh data in background
     fetchProducts();
     fetchLocations();
   }, []);
@@ -165,18 +177,22 @@ function SEOPage() {
         setError(
           "Slug can only contain lowercase letters, numbers, and hyphens. No spaces or other characters allowed."
         );
+        toast.error("Invalid slug format.");
         return;
       }
       if (!form.sku || !form.slug || !form.locationId || !form.productId) {
         setError("SKU, Slug, LocationId, and ProductId are required.");
+        toast.error("SKU, Slug, LocationId, and ProductId are required.");
         return;
       }
       const payload = { ...form };
       if (payload.publishedAt === "") delete payload.publishedAt;
       if (editSEO) {
         await axios.put(`${BACKEND_API}/api/seos/${editSEO._id}`, payload);
+        toast.success("SEO entry updated successfully!");
       } else {
         await axios.post(`${BACKEND_API}/api/seos`, payload);
+        toast.success("SEO entry added successfully!");
       }
       fetchSEOs();
       handleClose();
@@ -187,8 +203,10 @@ function SEOPage() {
             (err.response.data.errors && err.response.data.errors[0]?.msg) ||
             "Request failed with status code 400"
         );
+        toast.error(err.response.data.message || "Request failed with status code 400");
       } else {
         setError("An unexpected error occurred.");
+        toast.error("An unexpected error occurred.");
       }
     }
   };
@@ -196,6 +214,7 @@ function SEOPage() {
   const handleDelete = async (id) => {
     await axios.delete(`${BACKEND_API}/api/seos/${id}`);
     fetchSEOs();
+    toast.success("SEO entry deleted successfully!");
   };
 
   const handleExportPDF = async () => {
@@ -251,7 +270,7 @@ function SEOPage() {
                 key={seo._id}
                 sx={{
                   borderRadius: 3,
-                  boxShadow: 4,
+                  boxShadow: 6,
                   minHeight: 420,
                   width: "100%",
                   maxWidth: 540,
@@ -262,9 +281,10 @@ function SEOPage() {
                   overflow: "hidden",
                   mb: 4,
                   p: 0,
+                  background: "#fafaff",
                 }}
               >
-                {/* Top header */}
+                {/* Header */}
                 <Box
                   sx={{
                     width: "100%",
@@ -314,14 +334,14 @@ function SEOPage() {
                 </Box>
                 <CardContent sx={{ width: "100%", pt: 2, pb: 1 }}>
                   <Stack spacing={1} divider={<Divider flexItem />}>
+                    {/* Product & Location */}
                     <Stack direction="row" spacing={1} alignItems="center">
                       <ShoppingCart fontSize="small" color="primary" />
                       <Typography variant="body2" fontWeight={500}>
                         Product:
                       </Typography>
                       <Typography variant="body2">
-                        {products.find((p) => p._id === seo.productId)?.name ||
-                          seo.productId}
+                        {products.find((p) => p._id === seo.productId)?.name || seo.productId}
                       </Typography>
                     </Stack>
                     <Stack direction="row" spacing={1} alignItems="center">
@@ -330,10 +350,10 @@ function SEOPage() {
                         Location:
                       </Typography>
                       <Typography variant="body2">
-                        {locations.find((l) => l._id === seo.locationId)?.name ||
-                          seo.locationId}
+                        {locations.find((l) => l._id === seo.locationId)?.name || seo.locationId}
                       </Typography>
                     </Stack>
+                    {/* SKU, Rating, Published */}
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Info fontSize="small" color="primary" />
                       <Typography variant="body2" fontWeight={500}>
@@ -356,11 +376,10 @@ function SEOPage() {
                         Published:
                       </Typography>
                       <Typography variant="body2">
-                        {seo.publishedAt
-                          ? new Date(seo.publishedAt).toLocaleDateString()
-                          : "-"}
+                        {seo.publishedAt ? new Date(seo.publishedAt).toLocaleDateString() : "-"}
                       </Typography>
                     </Stack>
+                    {/* Description */}
                     <Box>
                       <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
                         Description:
@@ -369,6 +388,7 @@ function SEOPage() {
                         {seo.description || "-"}
                       </Typography>
                     </Box>
+                    {/* Keywords */}
                     <Box>
                       <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
                         Keywords:
@@ -377,42 +397,48 @@ function SEOPage() {
                         seo.keywords
                           .split(",")
                           .map((kw, i) => (
-                            <Chip
-                              key={i}
-                              label={kw.trim()}
-                              size="small"
-                              sx={{ mr: 0.5, mb: 0.5 }}
-                              color="secondary"
-                            />
+                            <Tooltip key={i} title={kw.trim()}>
+                              <Chip
+                                label={kw.trim().length > 15 ? kw.trim().slice(0, 15) + "…" : kw.trim()}
+                                size="small"
+                                sx={{ mr: 0.5, mb: 0.5 }}
+                                color="secondary"
+                              />
+                            </Tooltip>
                           ))
                       ) : (
                         <Chip label="No keywords" size="small" />
                       )}
                     </Box>
+                    {/* Canonical URL */}
                     <Box>
                       <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
                         Canonical URL:
                       </Typography>
                       <Typography variant="body2" sx={{ mb: 1 }}>
-                        <a
-                          href={seo.canonical_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <LinkIcon
-                            fontSize="inherit"
-                            sx={{ verticalAlign: "middle" }}
-                          />{" "}
-                          {seo.canonical_url}
-                        </a>
+                        {seo.canonical_url ? (
+                          <a
+                            href={seo.canonical_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: "#764ba2", textDecoration: "underline" }}
+                          >
+                            <LinkIcon fontSize="inherit" sx={{ verticalAlign: "middle" }} />{" "}
+                            {seo.canonical_url}
+                          </a>
+                        ) : (
+                          <span style={{ color: "#aaa" }}>—</span>
+                        )}
                       </Typography>
                     </Box>
+                    {/* Author */}
                     <Box>
                       <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
                         Author:
                       </Typography>
-                      <Typography variant="body2">{seo.author_name}</Typography>
+                      <Typography variant="body2">{seo.author_name || "—"}</Typography>
                     </Box>
+                    {/* Meta & Advanced */}
                     <Accordion
                       sx={{ boxShadow: "none", background: "transparent", mt: 1 }}
                     >
@@ -439,8 +465,7 @@ function SEOPage() {
                             <b>Content Language:</b> {seo.contentLanguage}
                           </Typography>
                           <Typography variant="body2">
-                            <b>Google Site Verification:</b>{" "}
-                            {seo.googleSiteVerification}
+                            <b>Google Site Verification:</b> {seo.googleSiteVerification}
                           </Typography>
                           <Typography variant="body2">
                             <b>MS Validate:</b> {seo.msValidate}
@@ -449,8 +474,7 @@ function SEOPage() {
                             <b>Theme Color:</b> {seo.themeColor}
                           </Typography>
                           <Typography variant="body2">
-                            <b>Mobile Web App Capable:</b>{" "}
-                            {seo.mobileWebAppCapable ? "Yes" : "No"}
+                            <b>Mobile Web App Capable:</b> {seo.mobileWebAppCapable ? "Yes" : "No"}
                           </Typography>
                           <Typography variant="body2">
                             <b>Apple Status Bar Style:</b> {seo.appleStatusBarStyle}
@@ -682,7 +706,7 @@ function SEOPage() {
             onChange={(e) =>
               setForm({
                 ...form,
-                mobileWebAppCapable: e.target.value === "true",
+                mobileWebAppCapable: e.target.value === " true",
               })
             }
             fullWidth

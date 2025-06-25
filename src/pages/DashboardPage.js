@@ -16,12 +16,15 @@ import {
   Place as LocationIcon,
   ShoppingCart as ProductIcon,
   Message as MessageIcon,
+  Public as SeoIcon,
 } from "@mui/icons-material";
 import api from "../utils/api";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
-const StatCard = ({ title, count, icon, color, loading }) => {
+const StatCard = ({ title, count, icon, color, loading, onClick }) => {
   return (
     <Card
       sx={{
@@ -29,11 +32,16 @@ const StatCard = ({ title, count, icon, color, loading }) => {
         background: `linear-gradient(135deg, ${color}15 0%, ${color}25 100%)`,
         border: `1px solid ${color}30`,
         transition: "all 0.3s ease",
-        "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow: `0 8px 25px ${color}20`,
-        },
+        cursor: onClick ? "pointer" : "default",
+        "&:hover": onClick
+          ? {
+              transform: "translateY(-4px)",
+              boxShadow: `0 8px 25px ${color}20`,
+              opacity: 0.95,
+            }
+          : {},
       }}
+      onClick={onClick}
     >
       <CardContent sx={{ p: 3 }}>
         <Box
@@ -92,9 +100,11 @@ function DashboardPage() {
     locations: 0,
     products: 0,
     inquiries: 0,
+    seos: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const fetchStats = async () => {
     try {
@@ -109,6 +119,7 @@ function DashboardPage() {
         locationsRes,
         productsRes,
         inquiriesRes,
+        seosRes
       ] = await Promise.all([
         api.get(`${BACKEND_API}/api/countries`),
         api.get(`${BACKEND_API}/api/states`),
@@ -116,6 +127,7 @@ function DashboardPage() {
         api.get(`${BACKEND_API}/api/locations`),
         api.get(`${BACKEND_API}/api/products`),
         api.get(`${BACKEND_API}/api/inquiries`),
+        api.get(`${BACKEND_API}/api/seos`),
       ]);
 
       setStats({
@@ -125,10 +137,13 @@ function DashboardPage() {
         locations: locationsRes.data.length || 0,
         products: productsRes.data.length || 0,
         inquiries: inquiriesRes.data.length || 0,
+        seos: seosRes.data.length || 0
       });
+      toast.success("Dashboard statistics loaded successfully!");
     } catch (err) {
       console.error("Error fetching stats:", err);
       setError("Failed to load dashboard statistics. Please try again later.");
+      toast.error("Failed to load dashboard statistics.");
     } finally {
       setLoading(false);
     }
@@ -144,36 +159,49 @@ function DashboardPage() {
       count: stats.countries,
       icon: <CountryIcon />,
       color: "#2196F3",
+      path: "/countries",
     },
     {
       title: "States",
       count: stats.states,
       icon: <StateIcon />,
       color: "#4CAF50",
+      path: "/states",
     },
     {
       title: "Cities",
       count: stats.cities,
       icon: <CityIcon />,
       color: "#FF9800",
+      path: "/cities",
     },
     {
       title: "Locations",
       count: stats.locations,
       icon: <LocationIcon />,
       color: "#9C27B0",
+      path: "/locations",
     },
     {
       title: "Products",
       count: stats.products,
       icon: <ProductIcon />,
       color: "#F44336",
+      path: "/products",
     },
     {
       title: "Business Inquiries",
       count: stats.inquiries,
       icon: <MessageIcon />,
       color: "#7C4DFF",
+      path: "/inquiries",
+    },
+    {
+      title: "SEOs",
+      count: stats.seos,
+      icon: <SeoIcon />,
+      color: "#00BCD4",
+      path: "/seos",
     },
   ];
 
@@ -213,6 +241,7 @@ function DashboardPage() {
               icon={card.icon}
               color={card.color}
               loading={loading}
+              onClick={card.path ? () => navigate(card.path) : undefined}
             />
           </Grid>
         ))}

@@ -23,6 +23,8 @@ import axios from "axios";
 import { CSVLink } from "react-csv";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
@@ -39,6 +41,10 @@ function StatePage() {
   const [pageSize, setPageSize] = useState(3);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmType, setConfirmType] = useState("");
+  const [pendingId, setPendingId] = useState(null);
+  const [pendingForm, setPendingForm] = useState(null);
 
   useEffect(() => {
     if (!loading && (!user || (user && user.isVerified === false))) {
@@ -46,12 +52,28 @@ function StatePage() {
     }
   }, [user, loading, navigate]);
 
+  useEffect(() => {
+    // Try to load cached states from localStorage for instant render
+    const cached = localStorage.getItem("states_cache");
+    if (cached) {
+      try {
+        setStates(JSON.parse(cached));
+        setIsLoading(false); // Show cached data instantly
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    fetchStates(); // Always fetch fresh data in background
+    fetchCountries();
+  }, []);
+
   const fetchStates = async () => {
     setIsLoading(true);
     setFetchError("");
     try {
       const res = await axios.get(`${BACKEND_API}/api/states`);
       setStates(res.data);
+      localStorage.setItem("states_cache", JSON.stringify(res.data)); // Cache for ISR
     } catch (err) {
       setFetchError("Failed to fetch states.");
     } finally {
@@ -62,11 +84,6 @@ function StatePage() {
     const res = await axios.get(`${BACKEND_API}/api/countries`);
     setCountries(res.data);
   };
-
-  useEffect(() => {
-    fetchStates();
-    fetchCountries();
-  }, []);
 
   const handleOpen = (state = null) => {
     setEditState(state);
@@ -91,33 +108,60 @@ function StatePage() {
   };
 
   const handleSubmit = async () => {
-    try {
-      if (editState) {
-        await axios.put(
-          `${BACKEND_API}/api/states/${editState._id}`,
-          form
-        );
-      } else {
-        await axios.post(`${BACKEND_API}/api/states`, form);
-      }
-      fetchStates();
-      handleClose();
-    } catch (err) {
-      if (err.response && err.response.status === 400) {
-        setError(
-          err.response.data.message ||
-            (err.response.data.errors && err.response.data.errors[0]?.msg) ||
-            "Request failed with status code 400"
-        );
-      } else {
-        setError("An unexpected error occurred.");
-      }
-    }
+    setPendingForm({ ...form });
+    setConfirmType("update");
+    setConfirmOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    await axios.delete(`${BACKEND_API}/api/states/${id}`);
-    fetchStates();
+  const handleDelete = (id) => {
+    setPendingId(id);
+    setConfirmType("delete");
+    setConfirmOpen(true);
+  };
+
+  const handleUpdate = () => {
+    setPendingForm({ ...form });
+    setConfirmType("update");
+    setConfirmOpen(true);
+  };
+
+  const confirmAction = async () => {
+    if (confirmType === "delete") {
+      try {
+        await axios.delete(`${BACKEND_API}/api/states/${pendingId}`);
+        fetchStates();
+        toast.success("State deleted successfully!");
+      } catch (err) {
+        console.error("Delete error:", err, err.response?.data);
+        toast.error("Failed to delete state.");
+      }
+      setPendingId(null);
+    } else if (confirmType === "update") {
+      try {
+        console.log("Submitting form:", pendingForm);
+        if (editState) {
+          await axios.put(`${BACKEND_API}/api/states/${editState._id}`, pendingForm);
+          toast.success("State updated successfully!");
+        } else {
+          await axios.post(`${BACKEND_API}/api/states`, pendingForm);
+          toast.success("State added successfully!");
+        }
+        fetchStates();
+        handleClose();
+      } catch (err) {
+        console.error("Add/Update error:", err, err.response?.data);
+        if (err.response && err.response.data && err.response.data.message) {
+          setError(err.response.data.message);
+          toast.error(err.response.data.message);
+        } else {
+          setError("An unexpected error occurred.");
+          toast.error("An unexpected error occurred.");
+        }
+      }
+      setPendingForm(null);
+    }
+    setConfirmOpen(false);
+    setConfirmType("");
   };
 
   // Helper to always get the country object from a state (handles both populated and ID cases)
@@ -228,7 +272,11 @@ function StatePage() {
           <Alert severity="info">No data found.</Alert>
         ) : (
           <DataGrid
-            rows={filteredRows.map((row) => ({ ...row, id: row._id }))}
+            rows={filteredRows.map((row) => ({
+              ...row,
+              id: row._id,
+              countryName: getCountryObj(row).name || "",
+            }))}
             columns={columns}
             pageSize={pageSize}
             onPageSizeChange={(newSize) => setPageSize(newSize)}
@@ -284,6 +332,13 @@ function StatePage() {
           </Button>
         </DialogActions>
       </Dialog>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={confirmType === "delete" ? "Confirm Delete" : "Confirm Save"}
+        content={confirmType === "delete" ? "Are you sure you want to delete this state?" : (editState ? "Are you sure you want to update this state?" : "Are you sure you want to add this state?")}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={confirmAction}
+      />
     </Box>
   );
 }

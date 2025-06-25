@@ -23,6 +23,8 @@ import axios from "axios";
 import { CSVLink } from "react-csv";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
 
@@ -47,6 +49,10 @@ function LocationPage() {
   const [pageSize, setPageSize] = useState(3);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmType, setConfirmType] = useState("");
+  const [pendingId, setPendingId] = useState(null);
+  const [pendingForm, setPendingForm] = useState(null);
 
   const fetchLocations = async () => {
     setIsLoading(true);
@@ -54,6 +60,7 @@ function LocationPage() {
     try {
       const res = await axios.get(`${BACKEND_API}/api/locations`);
       setLocations(res.data);
+      localStorage.setItem("locations_cache", JSON.stringify(res.data));
     } catch (err) {
       setFetchError("Failed to fetch locations.");
     } finally {
@@ -80,6 +87,15 @@ function LocationPage() {
   }, [user, loading, navigate]);
 
   useEffect(() => {
+    const cached = localStorage.getItem("locations_cache");
+    if (cached) {
+      try {
+        setLocations(JSON.parse(cached));
+        setIsLoading(false);
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
     fetchLocations();
     fetchCountries();
     fetchStates();
@@ -127,49 +143,54 @@ function LocationPage() {
   }
 
   const handleSubmit = async () => {
-    try {
-      if (!isValidSlug(form.slug)) {
-        setError(
-          "Slug can only contain lowercase letters, numbers, and hyphens. No spaces or other characters allowed."
-        );
-        return;
-      }
-      if (!form.country && !form.state && !form.city) {
-        setError("At least one of country, state, or city must be specified");
-        return;
-      }
-      const formData = {
-        ...form,
-        country: form.country || null,
-        state: form.state || null,
-        city: form.city || null,
-      };
-      if (editLocation) {
-        await axios.put(
-          `${BACKEND_API}/api/locations/${editLocation._id}`,
-          formData
-        );
-      } else {
-        await axios.post(`${BACKEND_API}/api/locations`, formData);
-      }
-      fetchLocations();
-      handleClose();
-    } catch (err) {
-      if (err.response && err.response.status === 400) {
-        setError(
-          err.response.data.message ||
-            (err.response.data.errors && err.response.data.errors[0]?.msg) ||
-            "Request failed with status code 400"
-        );
-      } else {
-        setError("An unexpected error occurred.");
-      }
-    }
+    setPendingForm({ ...form });
+    setConfirmType("update");
+    setConfirmOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    await axios.delete(`${BACKEND_API}/api/locations/${id}`);
-    fetchLocations();
+  const handleDelete = (id) => {
+    setPendingId(id);
+    setConfirmType("delete");
+    setConfirmOpen(true);
+  };
+
+  const confirmAction = async () => {
+    if (confirmType === "delete") {
+      try {
+        await axios.delete(`${BACKEND_API}/api/locations/${pendingId}`);
+        fetchLocations();
+        toast.success("Location deleted successfully!");
+      } catch (err) {
+        console.error("Delete error:", err, err.response?.data);
+        toast.error("Failed to delete location.");
+      }
+      setPendingId(null);
+    } else if (confirmType === "update") {
+      try {
+        console.log("Submitting form:", pendingForm);
+        if (editLocation) {
+          await axios.put(`${BACKEND_API}/api/locations/${editLocation._id}`, pendingForm);
+          toast.success("Location updated successfully!");
+        } else {
+          await axios.post(`${BACKEND_API}/api/locations`, pendingForm);
+          toast.success("Location added successfully!");
+        }
+        fetchLocations();
+        handleClose();
+      } catch (err) {
+        console.error("Add/Update error:", err, err.response?.data);
+        if (err.response && err.response.data && err.response.data.message) {
+          setError(err.response.data.message);
+          toast.error(err.response.data.message);
+        } else {
+          setError("An unexpected error occurred.");
+          toast.error("An unexpected error occurred.");
+        }
+      }
+      setPendingForm(null);
+    }
+    setConfirmOpen(false);
+    setConfirmType("");
   };
 
   // DataGrid columns
@@ -394,6 +415,13 @@ function LocationPage() {
           </Button>
         </DialogActions>
       </Dialog>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={confirmType === "delete" ? "Confirm Delete" : "Confirm Save"}
+        content={confirmType === "delete" ? "Are you sure you want to delete this location?" : (editLocation ? "Are you sure you want to update this location?" : "Are you sure you want to add this location?")}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={confirmAction}
+      />
     </Box>
   );
 }

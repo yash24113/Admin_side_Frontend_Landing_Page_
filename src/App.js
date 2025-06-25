@@ -7,6 +7,8 @@ import Footer from "./components/Footer";
 import SessionTimeoutWarning from "./components/SessionTimeoutWarning";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import "./App.css";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
@@ -42,6 +44,7 @@ function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const location = useLocation();
 
   const handleMenuToggle = () => {
     if (isMobile) {
@@ -104,7 +107,7 @@ function AppLayout() {
           </Suspense>
         </Box>
       </Box>
-      <Footer />
+      {location.pathname !== "/seos" && <Footer />}
       <SessionTimeoutWarning />
     </Box>
   );
@@ -149,6 +152,18 @@ export default function AppWithProvider() {
   return (
     <AuthProvider>
       <App />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </AuthProvider>
   );
 }
