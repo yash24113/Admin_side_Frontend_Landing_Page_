@@ -738,20 +738,7 @@ function SEOPage() {
               ))}
             </Select>
           </FormControl>
-          <FormControl fullWidth margin="normal" required>
-            <InputLabel>Country</InputLabel>
-            <Select
-              value={form.countryId || ""}
-              label="Country"
-              onChange={e => setForm({ ...form, countryId: e.target.value })}
-            >
-              {(dropdownOptions['Country'] || []).map(country => (
-                <MenuItem key={country._id || country.id || country.name} value={country._id || country.id || country.name}>
-                  {country.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+         
           <TextField
             label="Charset"
             value={form.charset}
