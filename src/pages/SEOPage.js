@@ -107,14 +107,7 @@ function SEOPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
-  const [customFields, setCustomFields] = useState(() => {
-    try {
-      const saved = localStorage.getItem("seo_custom_fields");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [customFields, setCustomFields] = useState([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [dropdownOptions, setDropdownOptions] = useState({});
   const [newFieldName, setNewFieldName] = useState("");
@@ -143,6 +136,15 @@ function SEOPage() {
     setLocations(res.data);
   };
 
+  const fetchCustomFields = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_API}/api/seo-custom-fields`);
+      setCustomFields(res.data);
+    } catch {
+      setCustomFields([]);
+    }
+  };
+
   useEffect(() => {
     if (!loading && (!user || (user && user.isVerified === false))) {
       navigate("/login");
@@ -163,11 +165,8 @@ function SEOPage() {
     fetchSEOs(); // Always fetch fresh data in background
     fetchProducts();
     fetchLocations();
+    fetchCustomFields();
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem("seo_custom_fields", JSON.stringify(customFields));
-  }, [customFields]);
 
   const handleOpen = (seo = null) => {
     let baseForm = seo
@@ -177,11 +176,6 @@ function SEOPage() {
           custom: seo.custom || {},
         }
       : { ...initialForm, custom: {} };
-    customFields.forEach(field => {
-      if (!(field.name in baseForm.custom)) {
-        baseForm.custom[field.name] = "";
-      }
-    });
     setEditSEO(seo);
     setForm(baseForm);
     setError("");
@@ -299,22 +293,31 @@ function SEOPage() {
     })();
   }, [customFields]);
 
-  const handleAddCustomField = () => {
+  const handleAddCustomField = async () => {
     if (!newFieldName.trim() || customFields.some(f => f.name === newFieldName.trim())) return;
     if (newFieldType === "dropdown" && !newDropdownSource) return;
-    setCustomFields([
-      ...customFields,
-      newFieldType === "dropdown"
+    try {
+      const payload = newFieldType === "dropdown"
         ? { name: newFieldName.trim(), type: newFieldType, dropdownSource: newDropdownSource }
-        : { name: newFieldName.trim(), type: newFieldType }
-    ]);
-    setNewFieldName("");
-    setNewFieldType("text");
-    setNewDropdownSource("");
+        : { name: newFieldName.trim(), type: newFieldType };
+        await axios.post(`${BACKEND_API}/api/seo-custom-fields`, payload);
+      fetchCustomFields();
+      setNewFieldName("");
+      setNewFieldType("text");
+      setNewDropdownSource("");
+    } catch (err) {
+      // Optionally show error
+    }
   };
 
-  const handleDeleteCustomField = idx => {
-    setCustomFields(customFields.filter((_, i) => i !== idx));
+  const handleDeleteCustomField = async idx => {
+    const field = customFields[idx];
+    try {
+      await axios.delete(`${BACKEND_API}/api/seo-custom-fields/${field._id}`);
+      fetchCustomFields();
+    } catch (err) {
+      // Optionally show error
+    }
   };
 
   return (
@@ -615,39 +618,41 @@ function SEOPage() {
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="subtitle1" fontWeight={700}>Custom Fields</Typography>
                       <Stack direction="row" spacing={2} flexWrap="wrap">
-                        {customFields.map((field, idx) => (
-                          <Box
-                            key={field.name}
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              background: "linear-gradient(90deg, #e0c3fc 0%, #8ec5fc 100%)",
-                              borderRadius: 2,
-                              px: 2,
-                              py: 1,
-                              boxShadow: 1,
-                              minWidth: 100,
-                              mr: 2,
-                              mb: 1,
-                            }}
-                          >
-                            <Tag fontSize="small" color="action" sx={{ mr: 1 }} />
-                            <Typography variant="body2" fontWeight={600} sx={{ color: '#764ba2', mr: 0.5 }}>
-                              {field.name}:
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#222' }}>
-                              {field.type === 'dropdown' && dropdownOptions[field.name]
-                                ? (
-                                    dropdownOptions[field.name].find(
-                                      opt => (opt._id || opt.id || opt.name) === (seo.custom && seo.custom[field.name])
-                                    )?.name || "—"
-                                  )
-                                : (seo.custom && seo.custom[field.name] !== undefined
-                                    ? String(seo.custom[field.name])
-                                    : "—")}
-                            </Typography>
-                          </Box>
-                        ))}
+                        {customFields.map((field, idx) => {
+                          let displayValue = "-";
+                          if (field.type === 'dropdown' && dropdownOptions[field.name]) {
+                            const options = field.name === 'Country' && dropdownOptions['Country'] ? dropdownOptions['Country'] : dropdownOptions[field.name];
+                            const found = options && options.find(
+                              opt => String(opt._id || opt.id || opt.name) === String(seo.custom?.[field.name])
+                            );
+                            if (found) displayValue = found.name;
+                          } else if (seo.custom && seo.custom[field.name] !== undefined) {
+                            displayValue = String(seo.custom[field.name]);
+                          }
+                          return (
+                            <Box
+                              key={field.name}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                background: "linear-gradient(90deg, #e0c3fc 0%, #8ec5fc 100%)",
+                                borderRadius: 2,
+                                px: 2,
+                                py: 1,
+                                boxShadow: 1,
+                                minWidth: 100,
+                                mr: 2,
+                                mb: 1,
+                              }}
+                            >
+                              <Tag fontSize="small" color="action" sx={{ mr: 1 }} />
+                              <Typography variant="body2" fontWeight={600} sx={{ color: '#764ba2', mr: 0.5 }}>
+                                {field.name}:
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#222' }}>{displayValue}</Typography>
+                            </Box>
+                          );
+                        })}
                       </Stack>
                     </Box>
                   )}
@@ -729,6 +734,20 @@ function SEOPage() {
               {products.map((product) => (
                 <MenuItem key={product._id} value={product._id}>
                   {product.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Country</InputLabel>
+            <Select
+              value={form.countryId || ""}
+              label="Country"
+              onChange={e => setForm({ ...form, countryId: e.target.value })}
+            >
+              {(dropdownOptions['Country'] || []).map(country => (
+                <MenuItem key={country._id || country.id || country.name} value={country._id || country.id || country.name}>
+                  {country.name}
                 </MenuItem>
               ))}
             </Select>
@@ -1121,9 +1140,9 @@ function SEOPage() {
               <tbody>
                 {customFields.map((field, idx) => (
                   <tr key={field.name}>
-                    <td style={{ padding: 4 }}>{field.name}</td>
-                    <td style={{ padding: 4 }}>{field.type}</td>
-                    <td style={{ padding: 4 }}>{field.type === 'dropdown' ? field.dropdownSource : ''}</td>
+                    <td style={{ padding: 4 }}>{field.name || '-'}</td>
+                    <td style={{ padding: 4 }}>{field.type ? field.type.charAt(0).toUpperCase() + field.type.slice(1) : '-'}</td>
+                    <td style={{ padding: 4 }}>{field.type === 'dropdown' ? (field.dropdownSource || '-') : '-'}</td>
                     <td style={{ padding: 4 }}>
                       <Button
                         color="error"
