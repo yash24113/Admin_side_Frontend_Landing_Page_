@@ -63,7 +63,7 @@ const SessionTimeoutWarning = () => {
     setIsExtending(true);
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/extend-session",
+        "https://langingpage-production-f27f.up.railway.app/api/auth/extend-session",
         {
           email: user.email,
         }
