@@ -22,7 +22,7 @@ import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
+const BACKEND_API = "https://age-landing-backend.egport.com";
 
 const StatCard = ({ title, count, icon, color, loading, onClick }) => {
   return (

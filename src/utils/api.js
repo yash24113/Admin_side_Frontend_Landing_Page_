@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Hardcoded backend API URL
 const api = axios.create({
-  baseURL: "https://langingpage-production-f27f.up.railway.app",
+  baseURL: "https://age-landing-backend.egport.com",
 });
 
 export default api;

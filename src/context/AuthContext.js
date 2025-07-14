@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       if (user?.email) {
-        await axios.post("https://langingpage-production-f27f.up.railway.app/api/auth/logout", {
+        await axios.post("https://age-landing-backend.egport.com/api/auth/logout", {
           email: user.email,
         });
       }

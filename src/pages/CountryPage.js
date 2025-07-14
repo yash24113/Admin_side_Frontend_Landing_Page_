@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ConfirmDialog from "../components/ConfirmDialog";
 
-const BACKEND_API = "https://langingpage-production-f27f.up.railway.app";
+const BACKEND_API = "https://age-landing-backend.egport.com";
 
 function CountryPage() {
   const { user, loading } = useAuth();
