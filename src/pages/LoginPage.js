@@ -108,7 +108,7 @@ function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await axios.post(`https://age-landing-backend.egport.com/api/auth/verify-otp`, {
+      const res = await axios.post(`${BACKEND_API}/api/auth/verify-otp`, {
         email,
         otp,
       });
