@@ -19,6 +19,9 @@ const LocationPage = lazy(() => import("./pages/LocationPage"));
 const ProductPage = lazy(() => import("./pages/ProductPage"));
 const SEOPage = lazy(() => import("./pages/SEOPage"));
 const InquiryAdminPage = lazy(() => import("./pages/InquiryAdminPage"));
+const AttendancePage = lazy(() => import("./pages/AttendancePage"));
+const EmployeePage = lazy(() => import("./pages/EmployeePage"));
+const OfficePage = lazy(() => import("./pages/OfficePage"));
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -102,12 +105,15 @@ function AppLayout() {
               <Route path="/products" element={<PrivateRoute><ProductPage /></PrivateRoute>} />
               <Route path="/inquiries" element={<PrivateRoute><InquiryAdminPage /></PrivateRoute>} />
               <Route path="/seos" element={<PrivateRoute><SEOPage /></PrivateRoute>} />
+              <Route path="/attendance" element={<PrivateRoute><AttendancePage /></PrivateRoute>} />
+              <Route path="/employees" element={<PrivateRoute><EmployeePage /></PrivateRoute>} />
+              <Route path="/offices" element={<PrivateRoute><OfficePage /></PrivateRoute>} />
               <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
           </Suspense>
         </Box>
       </Box>
-      {location.pathname !== "/seos" && <Footer />}
+      {location.pathname !== "/seos" && location.pathname !== "/attendance" && <Footer />}
       <SessionTimeoutWarning />
     </Box>
   );

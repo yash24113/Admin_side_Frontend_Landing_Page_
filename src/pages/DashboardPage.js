@@ -17,12 +17,16 @@ import {
   ShoppingCart as ProductIcon,
   Message as MessageIcon,
   Public as SeoIcon,
+  People as PeopleIcon,
+  Business as BusinessIcon,
 } from "@mui/icons-material";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const BACKEND_API = "https://age-landing-backend.egport.com";
+const EMPLOYEE_API = "https://emsbackend-production-5b9b.up.railway.app/employees";
+const OFFICE_API = "https://emsbackend-production-5b9b.up.railway.app/offices";
 
 const StatCard = ({ title, count, icon, color, loading, onClick }) => {
   return (
@@ -100,7 +104,9 @@ function DashboardPage() {
     locations: 0,
     products: 0,
     inquiries: 0,
-    seos: 0
+    seos: 0,
+    employees: 0,
+    offices: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -119,7 +125,9 @@ function DashboardPage() {
         locationsRes,
         productsRes,
         inquiriesRes,
-        seosRes
+        seosRes,
+        employeesRes,
+        officesRes
       ] = await Promise.all([
         api.get(`${BACKEND_API}/api/countries`),
         api.get(`${BACKEND_API}/api/states`),
@@ -128,6 +136,9 @@ function DashboardPage() {
         api.get(`${BACKEND_API}/api/products`),
         api.get(`${BACKEND_API}/api/inquiries`),
         api.get(`${BACKEND_API}/api/seos`),
+        // fetch employees from EMS API
+        (await import('axios')).default.get(EMPLOYEE_API),
+        (await import('axios')).default.get(OFFICE_API),
       ]);
 
       setStats({
@@ -137,7 +148,9 @@ function DashboardPage() {
         locations: locationsRes.data.length || 0,
         products: productsRes.data.length || 0,
         inquiries: inquiriesRes.data.length || 0,
-        seos: seosRes.data.length || 0
+        seos: seosRes.data.length || 0,
+        employees: employeesRes.data.length || 0,
+        offices: officesRes.data.length || 0,
       });
       toast.success("Dashboard statistics loaded successfully!");
     } catch (err) {
@@ -202,6 +215,20 @@ function DashboardPage() {
       icon: <SeoIcon />,
       color: "#00BCD4",
       path: "/seos",
+    },
+    {
+      title: "Employees",
+      count: stats.employees,
+      icon: <PeopleIcon />,
+      color: "#607D8B",
+      path: "/employees",
+    },
+    {
+      title: "Offices",
+      count: stats.offices,
+      icon: <BusinessIcon />,
+      color: "#795548",
+      path: "/offices",
     },
   ];
 

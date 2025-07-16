@@ -15,6 +15,8 @@ import {
   ListItemButton,
   IconButton,
   Tooltip,
+  ListSubheader,
+  Collapse,
 } from "@mui/material";
 import PublicIcon from "@mui/icons-material/Public";
 import FlagIcon from "@mui/icons-material/Flag";
@@ -26,6 +28,8 @@ import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MessageIcon from "@mui/icons-material/Message";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
 
 const menuItems = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
@@ -36,7 +40,6 @@ const menuItems = [
   { text: "Products", icon: <ShoppingCartIcon />, path: "/products" },
   { text: "SEO", icon: <PublicIcon />, path: "/seos" },
   { text: "Business Inquiry", icon: <MessageIcon />, path: "/inquiries" },
- 
 ];
 
 function Sidebar({
@@ -50,6 +53,8 @@ function Sidebar({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const drawerWidth = collapsed ? 64 : 280;
+
+  const [emsOpen, setEmsOpen] = React.useState(false);
 
   const drawerContent = (
     <>
@@ -97,7 +102,7 @@ function Sidebar({
               mb: 1,
             }}
           >
-            Navigation
+            {/* Navigation */}
           </Typography>
           <Divider sx={{ mb: 2 }} />
         </Box>
@@ -155,6 +160,135 @@ function Sidebar({
             </Tooltip>
           </ListItem>
         ))}
+        {/* EMS Dropdown */}
+        <ListItem disablePadding sx={{ mb: 1 }}>
+          <Tooltip
+            title={collapsed ? "EMS" : ""}
+            placement="right"
+            disableHoverListener={!collapsed}
+          >
+            <ListItemButton
+              onClick={() => setEmsOpen((prev) => !prev)}
+              sx={{
+                borderRadius: collapsed ? 1 : 2,
+                minHeight: collapsed ? 48 : 56,
+                justifyContent: collapsed ? "center" : "flex-start",
+                "&:hover": {
+                  backgroundColor: "action.hover",
+                },
+                transition: "all 0.2s ease-in-out",
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: collapsed ? 24 : 40,
+                  color: "text.secondary",
+                  justifyContent: "center",
+                }}
+              >
+                <PublicIcon />
+              </ListItemIcon>
+              {!collapsed && (
+                <ListItemText
+                  primary="EMS"
+                  primaryTypographyProps={{ fontWeight: 500 }}
+                />
+              )}
+              {!collapsed && (emsOpen ? <ExpandLess /> : <ExpandMore />)}
+            </ListItemButton>
+          </Tooltip>
+        </ListItem>
+        <Collapse in={emsOpen && !collapsed} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              component={NavLink}
+              to="/attendance"
+              onClick={isMobile ? onClose : undefined}
+              sx={{
+                pl: 6,
+                borderRadius: 2,
+                minHeight: 48,
+                "&.active": {
+                  backgroundColor: "primary.main",
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "primary.dark",
+                  },
+                  "& .MuiListItemIcon-root": {
+                    color: "white",
+                  },
+                },
+                "&:hover": {
+                  backgroundColor: "action.hover",
+                },
+                transition: "all 0.2s ease-in-out",
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 24, color: "text.secondary" }}>
+                <PublicIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Attendance" primaryTypographyProps={{ fontWeight: 400 }} />
+            </ListItemButton>
+            <ListItemButton
+              component={NavLink}
+              to="/employees"
+              onClick={isMobile ? onClose : undefined}
+              sx={{
+                pl: 6,
+                borderRadius: 2,
+                minHeight: 48,
+                "&.active": {
+                  backgroundColor: "primary.main",
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "primary.dark",
+                  },
+                  "& .MuiListItemIcon-root": {
+                    color: "white",
+                  },
+                },
+                "&:hover": {
+                  backgroundColor: "action.hover",
+                },
+                transition: "all 0.2s ease-in-out",
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 24, color: "text.secondary" }}>
+                <PublicIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Employee" primaryTypographyProps={{ fontWeight: 400 }} />
+            </ListItemButton>
+            <ListItemButton
+              component={NavLink}
+              to="/offices"
+              onClick={isMobile ? onClose : undefined}
+              sx={{
+                pl: 6,
+                borderRadius: 2,
+                minHeight: 48,
+                "&.active": {
+                  backgroundColor: "primary.main",
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "primary.dark",
+                  },
+                  "& .MuiListItemIcon-root": {
+                    color: "white",
+                  },
+                },
+                "&:hover": {
+                  backgroundColor: "action.hover",
+                },
+                transition: "all 0.2s ease-in-out",
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 24, color: "text.secondary" }}>
+                <PublicIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Office" primaryTypographyProps={{ fontWeight: 400 }} />
+            </ListItemButton>
+          </List>
+        </Collapse>
       </List>
     </>
   );
