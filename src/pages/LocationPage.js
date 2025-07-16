@@ -20,13 +20,13 @@ import {
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Edit, Delete, Download } from "@mui/icons-material";
 import axios from "axios";
+// Use environment variable for API
+const BACKEND_API = process.env.REACT_APP_BACKEND_API;
 import { CSVLink } from "react-csv";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ConfirmDialog from "../components/ConfirmDialog";
-
-const BACKEND_API = "https://age-landing-backend.egport.com";
 
 function LocationPage() {
   const { user, loading } = useAuth();

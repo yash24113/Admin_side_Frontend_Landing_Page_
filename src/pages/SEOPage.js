@@ -47,7 +47,8 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-const BACKEND_API = "https://age-landing-backend.egport.com";
+// Use environment variable for API
+const BACKEND_API = process.env.REACT_APP_BACKEND_API;
 
 function isValidSlug(slug) {
   return /^[a-z0-9-]+$/.test(slug);

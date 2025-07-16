@@ -92,7 +92,7 @@ function LoginPage() {
     }
     setLoading(true);
     try {
-      await axios.post(`https://age-landing-backend.egport.com/api/auth/request-otp`, {
+      await axios.post(`${BACKEND_API}/api/auth/request-otp`, {
         email,
       });
       setStep(2);
