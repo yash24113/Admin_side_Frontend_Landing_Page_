@@ -195,34 +195,101 @@ function LocationPage() {
 
   // DataGrid columns
   const columns = [
-    { field: "name", headerName: "Name", flex: 1, filterable: true },
-    { field: "slug", headerName: "Slug", flex: 1, filterable: true },
+    { 
+      field: "name", 
+      headerName: "Name", 
+      flex: 1.5, 
+      minWidth: 120,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
+    { 
+      field: "slug", 
+      headerName: "Slug", 
+      flex: 1.2, 
+      minWidth: 100,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
     {
       field: "city",
       headerName: "City",
-      flex: 1,
-      valueGetter: (params) => params?.row?.city?.name || "Not specified",
+      flex: 1.3,
+      minWidth: 110,
       filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params?.row?.city?.name || "Not specified"}
+        </div>
+      ),
     },
     {
       field: "state",
       headerName: "State",
-      flex: 1,
-      valueGetter: (params) => params?.row?.state?.name || "Not specified",
+      flex: 1.3,
+      minWidth: 110,
       filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params?.row?.state?.name || "Not specified"}
+        </div>
+      ),
     },
     {
       field: "country",
       headerName: "Country",
-      flex: 1,
-      valueGetter: (params) => params?.row?.country?.name || "Not specified",
+      flex: 1.3,
+      minWidth: 110,
       filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params?.row?.country?.name || "Not specified"}
+        </div>
+      ),
     },
     {
       field: "actions",
       headerName: "Actions",
       sortable: false,
       filterable: false,
+      minWidth: 120,
       renderCell: (params) =>
         params?.row ? (
           <>
@@ -280,11 +347,23 @@ function LocationPage() {
   };
 
   return (
-    <Box p={3}>
+    <Box className="responsive-container">
       <Typography variant="h6" mb={2}>
         Locations
       </Typography>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+      <Stack 
+        direction={{ xs: 'column', sm: 'row' }} 
+        spacing={2} 
+        mb={2}
+        sx={{
+          '& .MuiButton-root': {
+            minWidth: { xs: '100%', sm: 'auto' }
+          },
+          '& .MuiTextField-root': {
+            minWidth: { xs: '100%', sm: '200px' }
+          }
+        }}
+      >
         <Button variant="contained" color="primary" onClick={() => handleOpen()}>
           Add Location
         </Button>
@@ -301,7 +380,20 @@ function LocationPage() {
           Export PDF
         </Button>
       </Stack>
-      <Box sx={{ height: 400, width: "100%" }}>
+      <Box sx={{ 
+        height: { xs: 350, sm: 400 }, 
+        width: "100%",
+        overflow: 'auto',
+        '& .MuiDataGrid-root': {
+          fontSize: { xs: '12px', sm: '14px' }
+        },
+        '& .MuiDataGrid-virtualScroller': {
+          overflow: 'auto !important'
+        },
+        '& .MuiDataGrid-virtualScrollerContent': {
+          minWidth: 'max-content'
+        }
+      }}>
         {isLoading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height={300}>
             <CircularProgress />
@@ -321,6 +413,29 @@ function LocationPage() {
             components={{ Toolbar: GridToolbar }}
             disableSelectionOnClick
             autoHeight
+            columnBuffer={2}
+            columnThreshold={2}
+            sx={{
+              '& .MuiDataGrid-columnHeaders': {
+                minHeight: { xs: '40px', sm: '56px' }
+              },
+              '& .MuiDataGrid-cell': {
+                minHeight: { xs: '40px', sm: '52px' },
+                padding: { xs: '4px 8px', sm: '8px 16px' }
+              },
+              '& .MuiDataGrid-row': {
+                minHeight: { xs: '40px', sm: '52px' }
+              },
+              '& .MuiDataGrid-columnHeader': {
+                padding: { xs: '4px 8px', sm: '8px 16px' }
+              },
+              '& .MuiDataGrid-virtualScroller': {
+                overflow: 'auto !important'
+              },
+              '& .MuiDataGrid-virtualScrollerContent': {
+                minWidth: 'max-content'
+              }
+            }}
           />
         )}
       </Box>

@@ -110,7 +110,8 @@ export default function InquiryAdminPage() {
     {
       field: "name",
       headerName: "Name",
-      flex: 1,
+      flex: 1.3,
+      minWidth: 120,
       filterable: true,
       editable: false,
       renderCell: (params) =>
@@ -123,13 +124,22 @@ export default function InquiryAdminPage() {
             variant="standard"
           />
         ) : (
-          params.value
+          <div style={{ 
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis',
+            width: '100%',
+            paddingRight: '8px'
+          }}>
+            {params.value}
+          </div>
         ),
     },
     {
       field: "email",
       headerName: "Email",
-      flex: 1,
+      flex: 1.5,
+      minWidth: 150,
       filterable: true,
       editable: false,
       renderCell: (params) =>
@@ -142,13 +152,22 @@ export default function InquiryAdminPage() {
             variant="standard"
           />
         ) : (
-          params.value
+          <div style={{ 
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis',
+            width: '100%',
+            paddingRight: '8px'
+          }}>
+            {params.value}
+          </div>
         ),
     },
     {
       field: "phone",
       headerName: "Phone",
-      flex: 1,
+      flex: 1.2,
+      minWidth: 100,
       filterable: true,
       editable: false,
       renderCell: (params) =>
@@ -161,13 +180,21 @@ export default function InquiryAdminPage() {
             variant="standard"
           />
         ) : (
-          params.value
+          <div style={{ 
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis',
+            width: '100%'
+          }}>
+            {params.value}
+          </div>
         ),
     },
     {
       field: "message",
       headerName: "Message",
-      flex: 2,
+      flex: 2.5,
+      minWidth: 200,
       filterable: true,
       editable: false,
       renderCell: (params) =>
@@ -182,28 +209,42 @@ export default function InquiryAdminPage() {
             minRows={2}
           />
         ) : (
-          params.value
+          <div style={{ 
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis',
+            width: '100%',
+            paddingRight: '8px'
+          }}>
+            {params.value}
+          </div>
         ),
     },
     {
       field: "createdAt",
-      headerName: "createdAt",
-      flex: 1,
+      headerName: "Created At",
+      flex: 1.3,
+      minWidth: 120,
       filterable: true,
       editable: false,
       renderCell: (params) =>
         editId === params.row._id ? (
           <TextField
-            name="message"
+            name="createdAt"
             value={editData.createdAt || ""}
             onChange={handleEditChange}
             size="small"
             variant="standard"
-            multiline
-            minRows={2}
           />
         ) : (
-          params.value
+          <div style={{ 
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis',
+            width: '100%'
+          }}>
+            {params.value}
+          </div>
         ),
     },
 
@@ -212,6 +253,7 @@ export default function InquiryAdminPage() {
       headerName: "Actions",
       sortable: false,
       filterable: false,
+      minWidth: 160,
       renderCell: (params) => (
         <>
           {editId === params.row._id ? (
@@ -289,11 +331,23 @@ export default function InquiryAdminPage() {
 
   return (
     <>
-      <Box p={3}>
+      <Box className="responsive-container">
         <Typography variant="h6" mb={2}>
           Business Inquiry
         </Typography>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }} 
+          spacing={2} 
+          mb={2}
+          sx={{
+            '& .MuiButton-root': {
+              minWidth: { xs: '100%', sm: 'auto' }
+            },
+            '& .MuiTextField-root': {
+              minWidth: { xs: '100%', sm: '200px' }
+            }
+          }}
+        >
           <TextField
             label="Search"
             value={search}
@@ -307,7 +361,20 @@ export default function InquiryAdminPage() {
             Export PDF
           </Button>
         </Stack>
-        <Box sx={{ height: 400, width: "100%" }}>
+        <Box sx={{ 
+          height: { xs: 350, sm: 400 }, 
+          width: "100%",
+          overflow: 'auto',
+          '& .MuiDataGrid-root': {
+            fontSize: { xs: '12px', sm: '14px' }
+          },
+          '& .MuiDataGrid-virtualScroller': {
+            overflow: 'auto !important'
+          },
+          '& .MuiDataGrid-virtualScrollerContent': {
+            minWidth: 'max-content'
+          }
+        }}>
           {isLoading ? (
             <Box display="flex" justifyContent="center" alignItems="center" height={300}>
               <CircularProgress />
@@ -327,6 +394,29 @@ export default function InquiryAdminPage() {
               components={{ Toolbar: GridToolbar }}
               disableSelectionOnClick
               autoHeight
+              columnBuffer={2}
+              columnThreshold={2}
+              sx={{
+                '& .MuiDataGrid-columnHeaders': {
+                  minHeight: { xs: '40px', sm: '56px' }
+                },
+                '& .MuiDataGrid-cell': {
+                  minHeight: { xs: '40px', sm: '52px' },
+                  padding: { xs: '4px 8px', sm: '8px 16px' }
+                },
+                '& .MuiDataGrid-row': {
+                  minHeight: { xs: '40px', sm: '52px' }
+                },
+                '& .MuiDataGrid-columnHeader': {
+                  padding: { xs: '4px 8px', sm: '8px 16px' }
+                },
+                '& .MuiDataGrid-virtualScroller': {
+                  overflow: 'auto !important'
+                },
+                '& .MuiDataGrid-virtualScrollerContent': {
+                  minWidth: 'max-content'
+                }
+              }}
             />
           )}
         </Box>

@@ -64,4 +64,137 @@ body {
 /* Add property-specific transitions for buttons and interactive elements */
 button, .MuiButton-root, .MuiListItemButton-root {
   transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+/* Responsive DataGrid styles for mobile */
+@media (max-width: 768px) {
+  .MuiDataGrid-root {
+    font-size: 12px !important;
+  }
+  
+  .MuiDataGrid-columnHeaders {
+    min-height: 40px !important;
+  }
+  
+  .MuiDataGrid-columnHeader {
+    padding: 4px 8px !important;
+  }
+  
+  .MuiDataGrid-cell {
+    padding: 4px 8px !important;
+    min-height: 40px !important;
+  }
+  
+  .MuiDataGrid-row {
+    min-height: 40px !important;
+  }
+  
+  .MuiDataGrid-footerContainer {
+    min-height: 40px !important;
+  }
+  
+  .MuiDataGrid-toolbarContainer {
+    padding: 8px !important;
+  }
+  
+  .MuiDataGrid-toolbarContainer button {
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+  }
+  
+  .MuiDataGrid-panel {
+    max-width: 90vw !important;
+  }
+  
+  .MuiDataGrid-panelContent {
+    max-width: 90vw !important;
+  }
+  
+  .MuiDataGrid-virtualScroller {
+    overflow-x: auto !important;
+  }
+  
+  .MuiDataGrid-virtualScrollerContent {
+    min-width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .MuiDataGrid-root {
+    font-size: 11px !important;
+  }
+  
+  .MuiDataGrid-columnHeader {
+    padding: 2px 4px !important;
+  }
+  
+  .MuiDataGrid-cell {
+    padding: 2px 4px !important;
+    min-height: 35px !important;
+  }
+  
+  .MuiDataGrid-row {
+    min-height: 35px !important;
+  }
+  
+  .MuiDataGrid-toolbarContainer button {
+    font-size: 11px !important;
+    padding: 2px 4px !important;
+    min-width: auto !important;
+  }
+  
+  .MuiDataGrid-toolbarContainer .MuiButton-startIcon {
+    margin-right: 2px !important;
+  }
+}
+
+/* Ensure horizontal scrolling on small screens */
+.MuiDataGrid-virtualScroller {
+  overflow-x: auto !important;
+}
+
+.MuiDataGrid-virtualScrollerContent {
+  min-width: 100% !important;
+}
+
+/* Better text display in DataGrid cells */
+.MuiDataGrid-cell {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.MuiDataGrid-cellContent {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  width: 100% !important;
+}
+
+/* Ensure proper column widths */
+.MuiDataGrid-columnHeader {
+  white-space: nowrap !important;
+}
+
+.MuiDataGrid-columnHeaderTitle {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Responsive container for pages */
+.responsive-container {
+  padding: 16px;
+}
+
+@media (max-width: 768px) {
+  .responsive-container {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .responsive-container {
+    padding: 8px;
+  }
 } 

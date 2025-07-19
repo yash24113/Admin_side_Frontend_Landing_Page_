@@ -159,19 +159,65 @@ function ProductPage() {
 
   // DataGrid columns
   const columns = [
-    { field: "name", headerName: "Name", flex: 1, filterable: true },
+    { 
+      field: "name", 
+      headerName: "Name", 
+      flex: 1.5, 
+      minWidth: 120,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
     {
       field: "description",
       headerName: "Description",
-      flex: 2,
+      flex: 2.5,
+      minWidth: 200,
       filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params.value}
+        </div>
+      ),
     },
-    { field: "slug", headerName: "Slug", flex: 1, filterable: true },
+    { 
+      field: "slug", 
+      headerName: "Slug", 
+      flex: 1.2, 
+      minWidth: 100,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
     {
       field: "actions",
       headerName: "Actions",
       sortable: false,
       filterable: false,
+      minWidth: 120,
       renderCell: (params) => {
         if (!params.row) return null; // Guard against null row
         return (
@@ -227,11 +273,23 @@ function ProductPage() {
   };
 
   return (
-    <Box p={3}>
+    <Box className="responsive-container">
       <Typography variant="h6" mb={2}>
         Products
       </Typography>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+      <Stack 
+        direction={{ xs: 'column', sm: 'row' }} 
+        spacing={2} 
+        mb={2}
+        sx={{
+          '& .MuiButton-root': {
+            minWidth: { xs: '100%', sm: 'auto' }
+          },
+          '& .MuiTextField-root': {
+            minWidth: { xs: '100%', sm: '200px' }
+          }
+        }}
+      >
         <Button variant="contained" color="primary" onClick={() => handleOpen()}>
           Add Product
         </Button>
@@ -248,7 +306,20 @@ function ProductPage() {
           Export PDF
         </Button>
       </Stack>
-      <Box sx={{ height: 400, width: "100%" }}>
+      <Box sx={{ 
+        height: { xs: 350, sm: 400 }, 
+        width: "100%",
+        overflow: 'auto',
+        '& .MuiDataGrid-root': {
+          fontSize: { xs: '12px', sm: '14px' }
+        },
+        '& .MuiDataGrid-virtualScroller': {
+          overflow: 'auto !important'
+        },
+        '& .MuiDataGrid-virtualScrollerContent': {
+          minWidth: 'max-content'
+        }
+      }}>
         {isLoading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height={300}>
             <CircularProgress />
@@ -268,6 +339,29 @@ function ProductPage() {
             components={{ Toolbar: GridToolbar }}
             disableSelectionOnClick
             autoHeight
+            columnBuffer={2}
+            columnThreshold={2}
+            sx={{
+              '& .MuiDataGrid-columnHeaders': {
+                minHeight: { xs: '40px', sm: '56px' }
+              },
+              '& .MuiDataGrid-cell': {
+                minHeight: { xs: '40px', sm: '52px' },
+                padding: { xs: '4px 8px', sm: '8px 16px' }
+              },
+              '& .MuiDataGrid-row': {
+                minHeight: { xs: '40px', sm: '52px' }
+              },
+              '& .MuiDataGrid-columnHeader': {
+                padding: { xs: '4px 8px', sm: '8px 16px' }
+              },
+              '& .MuiDataGrid-virtualScroller': {
+                overflow: 'auto !important'
+              },
+              '& .MuiDataGrid-virtualScrollerContent': {
+                minWidth: 'max-content'
+              }
+            }}
           />
         )}
       </Box>

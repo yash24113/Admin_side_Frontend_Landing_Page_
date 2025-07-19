@@ -51,10 +51,75 @@ function OfficePage() {
 
   // DataGrid columns
   const columns = [
-    { field: "officename", headerName: "Office Name", flex: 1, filterable: true },
-    { field: "latitude", headerName: "Latitude", flex: 1, filterable: true },
-    { field: "longitude", headerName: "Longitude", flex: 1, filterable: true },
-    { field: "_id", headerName: "Office ID", flex: 1, filterable: true },
+    { 
+      field: "officename", 
+      headerName: "Office Name", 
+      flex: 2, 
+      minWidth: 150,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
+    { 
+      field: "latitude", 
+      headerName: "Latitude", 
+      flex: 1.2, 
+      minWidth: 120,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
+    { 
+      field: "longitude", 
+      headerName: "Longitude", 
+      flex: 1.2, 
+      minWidth: 120,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
+    { 
+      field: "_id", 
+      headerName: "Office ID", 
+      flex: 1.5, 
+      minWidth: 140,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
   ];
 
   // Filtering/search logic
@@ -80,11 +145,23 @@ function OfficePage() {
   }));
 
   return (
-    <Box p={3}>
+    <Box className="responsive-container">
       <Typography variant="h6" mb={2}>
         Offices
       </Typography>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={2}>
+      <Stack 
+        direction={{ xs: "column", sm: "row" }} 
+        spacing={2} 
+        mb={2}
+        sx={{
+          '& .MuiButton-root': {
+            minWidth: { xs: '100%', sm: 'auto' }
+          },
+          '& .MuiTextField-root': {
+            minWidth: { xs: '100%', sm: '200px' }
+          }
+        }}
+      >
         <TextField
           label="Search"
           value={search}
@@ -95,7 +172,20 @@ function OfficePage() {
           <Button variant="outlined" startIcon={<Download />}>Export CSV</Button>
         </CSVLink>
       </Stack>
-      <Box sx={{ height: 400, width: "100%" }}>
+      <Box sx={{ 
+        height: { xs: 350, sm: 400 }, 
+        width: "100%",
+        overflow: 'auto',
+        '& .MuiDataGrid-root': {
+          fontSize: { xs: '12px', sm: '14px' }
+        },
+        '& .MuiDataGrid-virtualScroller': {
+          overflow: 'auto !important'
+        },
+        '& .MuiDataGrid-virtualScrollerContent': {
+          minWidth: 'max-content'
+        }
+      }}>
         {isLoading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height={300}>
             <CircularProgress />
@@ -115,6 +205,29 @@ function OfficePage() {
             components={{ Toolbar: GridToolbar }}
             disableSelectionOnClick
             autoHeight
+            columnBuffer={2}
+            columnThreshold={2}
+            sx={{
+              '& .MuiDataGrid-columnHeaders': {
+                minHeight: { xs: '40px', sm: '56px' }
+              },
+              '& .MuiDataGrid-cell': {
+                minHeight: { xs: '40px', sm: '52px' },
+                padding: { xs: '4px 8px', sm: '8px 16px' }
+              },
+              '& .MuiDataGrid-row': {
+                minHeight: { xs: '40px', sm: '52px' }
+              },
+              '& .MuiDataGrid-columnHeader': {
+                padding: { xs: '4px 8px', sm: '8px 16px' }
+              },
+              '& .MuiDataGrid-virtualScroller': {
+                overflow: 'auto !important'
+              },
+              '& .MuiDataGrid-virtualScrollerContent': {
+                minWidth: 'max-content'
+              }
+            }}
           />
         )}
       </Box>

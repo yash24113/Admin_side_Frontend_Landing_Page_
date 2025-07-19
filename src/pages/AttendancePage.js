@@ -117,16 +117,105 @@ function AttendancePage() {
 
   // DataGrid columns
   const columns = [
-    { field: "employee", headerName: "Employee", flex: 1, filterable: true },
-    { field: "type", headerName: "Type", flex: 1, filterable: true },
-    { field: "date", headerName: "Date", flex: 1, filterable: true },
-    { field: "time", headerName: "Time", flex: 1, filterable: true },
-    { field: "location", headerName: "Location", flex: 2, filterable: true },
-    { field: "office", headerName: "Office", flex: 1, filterable: true },
+    { 
+      field: "employee", 
+      headerName: "Employee", 
+      flex: 1.5, 
+      minWidth: 120,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
+    { 
+      field: "type", 
+      headerName: "Type", 
+      flex: 1, 
+      minWidth: 100,
+      filterable: true 
+    },
+    { 
+      field: "date", 
+      headerName: "Date", 
+      flex: 1.2, 
+      minWidth: 110,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
+    { 
+      field: "time", 
+      headerName: "Time", 
+      flex: 1, 
+      minWidth: 80,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
+    { 
+      field: "location", 
+      headerName: "Location", 
+      flex: 2, 
+      minWidth: 150,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
+    { 
+      field: "office", 
+      headerName: "Office", 
+      flex: 1.5, 
+      minWidth: 120,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
     {
       field: "selfie",
       headerName: "Selfie",
       flex: 1,
+      minWidth: 80,
       renderCell: (params) =>
         params.value ? (
           <img src={params.value} alt="selfie" style={{ width: 40, height: 40, borderRadius: 4 }} />
@@ -166,11 +255,23 @@ function AttendancePage() {
   }));
 
   return (
-    <Box p={3}>
+    <Box className="responsive-container">
       <Typography variant="h6" mb={2}>
         Attendance
       </Typography>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={2}>
+      <Stack 
+        direction={{ xs: "column", sm: "row" }} 
+        spacing={2} 
+        mb={2}
+        sx={{
+          '& .MuiButton-root': {
+            minWidth: { xs: '100%', sm: 'auto' }
+          },
+          '& .MuiTextField-root': {
+            minWidth: { xs: '100%', sm: '200px' }
+          }
+        }}
+      >
         <Button variant="contained" color="primary" onClick={handleOpen}>
           Add Attendance
         </Button>
@@ -184,7 +285,20 @@ function AttendancePage() {
           <Button variant="outlined" startIcon={<Download />}>Export CSV</Button>
         </CSVLink>
       </Stack>
-      <Box sx={{ height: 400, width: "100%" }}>
+      <Box sx={{ 
+        height: { xs: 350, sm: 400 }, 
+        width: "100%",
+        overflow: 'auto',
+        '& .MuiDataGrid-root': {
+          fontSize: { xs: '12px', sm: '14px' }
+        },
+        '& .MuiDataGrid-virtualScroller': {
+          overflow: 'auto !important'
+        },
+        '& .MuiDataGrid-virtualScrollerContent': {
+          minWidth: 'max-content'
+        }
+      }}>
         {isLoading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height={300}>
             <CircularProgress />
@@ -204,6 +318,29 @@ function AttendancePage() {
             components={{ Toolbar: GridToolbar }}
             disableSelectionOnClick
             autoHeight
+            columnBuffer={2}
+            columnThreshold={2}
+            sx={{
+              '& .MuiDataGrid-columnHeaders': {
+                minHeight: { xs: '40px', sm: '56px' }
+              },
+              '& .MuiDataGrid-cell': {
+                minHeight: { xs: '40px', sm: '52px' },
+                padding: { xs: '4px 8px', sm: '8px 16px' }
+              },
+              '& .MuiDataGrid-row': {
+                minHeight: { xs: '40px', sm: '52px' }
+              },
+              '& .MuiDataGrid-columnHeader': {
+                padding: { xs: '4px 8px', sm: '8px 16px' }
+              },
+              '& .MuiDataGrid-virtualScroller': {
+                overflow: 'auto !important'
+              },
+              '& .MuiDataGrid-virtualScrollerContent': {
+                minWidth: 'max-content'
+              }
+            }}
           />
         )}
       </Box>

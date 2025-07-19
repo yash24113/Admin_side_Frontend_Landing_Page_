@@ -185,26 +185,66 @@ function CityPage() {
 
   // DataGrid columns
   const columns = [
-    { field: "name", headerName: "City", flex: 1, filterable: true },
+    { 
+      field: "name", 
+      headerName: "City", 
+      flex: 1.5, 
+      minWidth: 120,
+      filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params.value}
+        </div>
+      )
+    },
     {
       field: "state",
       headerName: "State",
-      flex: 1,
-      renderCell: (params) => params.row.state?.name || "",
+      flex: 1.5,
+      minWidth: 120,
       filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params.row.state?.name || ""}
+        </div>
+      ),
     },
     {
       field: "country",
       headerName: "Country",
-      flex: 1,
-      renderCell: (params) => params.row.country?.name || "",
+      flex: 1.5,
+      minWidth: 120,
       filterable: true,
+      renderCell: (params) => (
+        <div style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%',
+          paddingRight: '8px'
+        }}>
+          {params.row.country?.name || ""}
+        </div>
+      ),
     },
     {
       field: "actions",
       headerName: "Actions",
       sortable: false,
       filterable: false,
+      minWidth: 120,
       renderCell: (params) => (
         <>
           <IconButton onClick={() => handleOpen(params.row)}>
@@ -257,11 +297,23 @@ function CityPage() {
   };
 
   return (
-    <Box p={3}>
+    <Box className="responsive-container">
       <Typography variant="h6" mb={2}>
         Cities
       </Typography>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={2}>
+      <Stack 
+        direction={{ xs: 'column', sm: 'row' }} 
+        spacing={2} 
+        mb={2}
+        sx={{
+          '& .MuiButton-root': {
+            minWidth: { xs: '100%', sm: 'auto' }
+          },
+          '& .MuiTextField-root': {
+            minWidth: { xs: '100%', sm: '200px' }
+          }
+        }}
+      >
         <Button variant="contained" color="primary" onClick={() => handleOpen()}>
           Add City
         </Button>
@@ -278,7 +330,20 @@ function CityPage() {
           Export PDF
         </Button>
       </Stack>
-      <Box sx={{ height: 400, width: "100%" }}>
+      <Box sx={{ 
+        height: { xs: 350, sm: 400 }, 
+        width: "100%",
+        overflow: 'auto',
+        '& .MuiDataGrid-root': {
+          fontSize: { xs: '12px', sm: '14px' }
+        },
+        '& .MuiDataGrid-virtualScroller': {
+          overflow: 'auto !important'
+        },
+        '& .MuiDataGrid-virtualScrollerContent': {
+          minWidth: 'max-content'
+        }
+      }}>
         {isLoading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height={300}>
             <CircularProgress />
@@ -298,6 +363,29 @@ function CityPage() {
             components={{ Toolbar: GridToolbar }}
             disableSelectionOnClick
             autoHeight
+            columnBuffer={2}
+            columnThreshold={2}
+            sx={{
+              '& .MuiDataGrid-columnHeaders': {
+                minHeight: { xs: '40px', sm: '56px' }
+              },
+              '& .MuiDataGrid-cell': {
+                minHeight: { xs: '40px', sm: '52px' },
+                padding: { xs: '4px 8px', sm: '8px 16px' }
+              },
+              '& .MuiDataGrid-row': {
+                minHeight: { xs: '40px', sm: '52px' }
+              },
+              '& .MuiDataGrid-columnHeader': {
+                padding: { xs: '4px 8px', sm: '8px 16px' }
+              },
+              '& .MuiDataGrid-virtualScroller': {
+                overflow: 'auto !important'
+              },
+              '& .MuiDataGrid-virtualScrollerContent': {
+                minWidth: 'max-content'
+              }
+            }}
           />
         )}
       </Box>
