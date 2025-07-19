@@ -30,6 +30,9 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MessageIcon from "@mui/icons-material/Message";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import PeopleIcon from "@mui/icons-material/People";
+import BusinessIcon from "@mui/icons-material/Business";
 
 const menuItems = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
@@ -224,10 +227,10 @@ function Sidebar({
                 transition: "all 0.2s ease-in-out",
               }}
             >
-              <ListItemIcon sx={{ minWidth: 24, color: "text.secondary" }}>
-                <PublicIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText primary="Attendance" primaryTypographyProps={{ fontWeight: 400 }} />
+                          <ListItemIcon sx={{ minWidth: 24, color: "text.secondary" }}>
+              <ScheduleIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="Attendance" primaryTypographyProps={{ fontWeight: 400 }} />
             </ListItemButton>
             <ListItemButton
               component={NavLink}
@@ -253,10 +256,10 @@ function Sidebar({
                 transition: "all 0.2s ease-in-out",
               }}
             >
-              <ListItemIcon sx={{ minWidth: 24, color: "text.secondary" }}>
-                <PublicIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText primary="Employee" primaryTypographyProps={{ fontWeight: 400 }} />
+                          <ListItemIcon sx={{ minWidth: 24, color: "text.secondary" }}>
+              <PeopleIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="Employee" primaryTypographyProps={{ fontWeight: 400 }} />
             </ListItemButton>
             <ListItemButton
               component={NavLink}
@@ -282,10 +285,10 @@ function Sidebar({
                 transition: "all 0.2s ease-in-out",
               }}
             >
-              <ListItemIcon sx={{ minWidth: 24, color: "text.secondary" }}>
-                <PublicIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText primary="Office" primaryTypographyProps={{ fontWeight: 400 }} />
+                          <ListItemIcon sx={{ minWidth: 24, color: "text.secondary" }}>
+              <BusinessIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="Office" primaryTypographyProps={{ fontWeight: 400 }} />
             </ListItemButton>
           </List>
         </Collapse>
