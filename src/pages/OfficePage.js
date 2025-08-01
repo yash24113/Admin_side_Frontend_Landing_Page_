@@ -15,7 +15,7 @@ import { CSVLink } from "react-csv";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const OFFICE_API = "https://emsbackend-production-5b9b.up.railway.app/offices";
+const OFFICE_API = `${process.env.ATTENDANCE_BACKEND_API}/offices`;
 
 function OfficePage() {
   const { user, loading } = useAuth();
