@@ -25,7 +25,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-const VIEW_API = "https://emsbackend-production-5b9b.up.railway.app/attendance";
+const VIEW_API = "https://emsbackend-production-5b9b.up.railway.app/attendance"; 
 const ADD_API = "https://emsbackend-production-5b9b.up.railway.app/api/attendance";
 
 function AttendancePage() {
