@@ -23,7 +23,7 @@ import companyLogo from "../images/amrita-logo.png";
 
 // Environment variable for API
 // use this in CRA
-const BACKEND_API = process.env.REACT_APP_BACKEND_API;
+const BACKEND_API = process.env.ATTENDANCE_BACKEND_API;
 
 // Rainbow animation border
 const rainbowBorder = {
